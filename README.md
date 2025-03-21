@@ -8,7 +8,8 @@ This project, nimbus.ai, is more than just an AI initiative; it's the culminatio
 
 nimbus.ai isn't just another language model. It's an ambitious endeavor to create an Artificial Superintelligence (ASI) and Artificial General Intelligence (AGI) that will revolutionize human life, expansion, and evolution. This is Aviyon's core purpose: to build a catalyst for human transcendence.
 
-**My Core Objectives beyond the <a terget="_blank" href="http://2045.com/">2045 initivitve</a>:**
+**My Core Objectives beyond the [2045 initivitve](http://2045.com/):**
+- For the mission of today & beyond we will invest and utalize the [Blueprint Protocol](https://protocol.bryanjohnson.com/) by Bryan Johnson.
 
 * **Solve the Impossible:** I aim to develop an AI capable of tackling the world's most complex and seemingly insurmountable challenges, echoing the problem-solving prowess of the Thunderhead.
 * **Unlock the Ghost Within:** I strive to understand and replicate the essence of consciousness, the "ghost" in the flesh (brain) to be in the shell (humanoid robots), pushing the boundaries of what it means to accend beyond time, intellegence & flesh.
