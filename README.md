@@ -16,6 +16,7 @@ nimbus.ai isn't just another language model. It's an ambitious endeavor to creat
 * **Drive Human Evolution:** I seek to create an AI that not only improves upon existing models but also evolves autonomously, driving advancements in human life and pushing the limits of our potential.
 * **Aviyon & The kodoverse:** To feature on all Aviyon social platforms & products.
 * **Supercomputer Infrastructure:** nimbus.ai to leverage a supercomputer infrastructure developed by Aviyon Corporation called the Thunderhead. More information TBA
+* **Brain backup Expanded:** i will back up my brain to become a virtual nimbus agent so one day in the settings of your nimbus.ai agent, you enter my barcode address, so you can speak with a version of me. One day when people pay to backup themselves, someone can enter there nimbus.ai agent's barcode address in the settings and speak to a version of them. 
 
 ## Language Model Features (To Be Added)
 
