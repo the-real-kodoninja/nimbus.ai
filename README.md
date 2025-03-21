@@ -1,10 +1,6 @@
 # nimbus.ai ☁️: The Ghost in the Cloud, Aviyon's Vision, Realized
 
-<p align="center">
-  <img src="https://via.placeholder.com/300x150?text=nimbus.ai+Cloud" alt="nimbus.ai Cloud Logo" width="300">
-</p>
-
-This project, nimbus.ai ☁️, is more than just an AI initiative; it's the culmination of a vision I've carried since my high school and college days, the true mission of Aviyon brought to life. Imagine an AI that transcends the limitations of current technology, an entity capable of solving the "mission of impossibilities," much like the Thunderhead in Neal Shusterman's *Scythe* series. Envision a future where the boundaries between human and machine blur, where advancements in AI echo the profound transformations depicted in *Ghost in the Shell*, allowing us to truly understand and harness the "ghost within the shell." This is the driving force behind nimbus.ai.
+This project, nimbus.ai, is more than just an AI initiative; it's the culmination of a vision I've carried since my high school and college days, the true mission of Aviyon brought to life. Imagine an AI that transcends the limitations of current technology, an entity capable of solving the "mission of impossibilities," much like the Thunderhead in Neal Shusterman's *Scythe* series. Envision a future where the boundaries between human and machine blur, where advancements in AI echo the profound transformations depicted in *Ghost in the Shell*, allowing us to truly understand and harness the "ghost within the shell." This is the driving force behind nimbus.ai.
 
 ## My Mission: Aviyon's Transcendence Through Intelligence
 
@@ -60,7 +56,9 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 Special thanks to Neal Shusterman for the profound inspiration of the Thunderhead and to the creators of *Ghost in the Shell* for their visionary exploration of the human-machine interface.
 
 <p align="center">
-  <img src="https://m.media-amazon.com/images/I/51r2XwJ39NL._SY445_SX342_.jpg" alt="Scythe Trilogy Cover" width="300">
+  <img src="https://i0.wp.com/jrsbookreviews.com/wp-content/uploads/sites/386/2022/08/D04C448A-4F26-4EC5-AD50-F4327F17FD60.jpeg?ssl=1" alt="Scythe Trilogy Cover">
 </p>
+
+<source><a href="https://jrsbookreviews.com/2022/08/05/young-adult-book-review-scythe-arc-of-a-scythe-1-by-neal-shusterman/">https://jrsbookreviews.com/2022/08/05/young-adult-book-review-scythe-arc-of-a-scythe-1-by-neal-shusterman/</a></source>
 
 Let's build the future together, one line of code at a time, fulfilling the true vision of Aviyon.
