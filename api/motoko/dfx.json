@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "projects": {
+    "nimbus": {
+      "source": [
+        {
+          "path": "src",
+          "type": "motoko"
+        }
+      ],
+      "dependencies": {},
+      "canisters": {
+        "nimbus": {
+          "type": "motoko",
+          "source": "src/main.mo",
+          "dependencies": {}
+        }
+      }
+    }
+  }
+}

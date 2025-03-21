@@ -1,0 +1,1 @@
+// This file contains utility functions that support the main application logic in Motoko, providing reusable code for various tasks.
