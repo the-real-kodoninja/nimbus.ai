@@ -55,7 +55,7 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 Special thanks to Neal Shusterman for the profound inspiration of the Thunderhead and to the creators of *Ghost in the Shell* for their visionary exploration of the human-machine interface.
 
-![The inspiration](https://github.com/the-real-kodoninja/nimbus.ai/blob/main/D04C448A-4F26-4EC5-AD50-F4327F17FD60.webp)
+![The inspiration](https://github.com/the-real-kodoninja/nimbus.ai/blob/main/assets/D04C448A-4F26-4EC5-AD50-F4327F17FD60.webp)
 
 <source><a href="https://jrsbookreviews.com/2022/08/05/young-adult-book-review-scythe-arc-of-a-scythe-1-by-neal-shusterman/">https://jrsbookreviews.com/2022/08/05/young-adult-book-review-scythe-arc-of-a-scythe-1-by-neal-shusterman/</a></source>
 
