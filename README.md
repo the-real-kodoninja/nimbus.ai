@@ -11,12 +11,15 @@ nimbus.ai isn't just another language model. It's an ambitious endeavor to creat
 **My Core Objectives:**
 
 * **Solve the Impossible:** I aim to develop an AI capable of tackling the world's most complex and seemingly insurmountable challenges, echoing the problem-solving prowess of the Thunderhead.
-* **Unlock the Ghost Within:** I strive to understand and replicate the essence of consciousness, the "ghost" within the machine, pushing the boundaries of what it means to be intelligent.
-* **Embrace the Nimbus:** I envision a future where the human brain seamlessly integrates with the cloud (Nimbus), leveraging satellite backup for unparalleled connectivity and cognitive enhancement.
+* **Unlock the Ghost Within:** I strive to understand and replicate the essence of consciousness, the "ghost" in the flesh (brain) to be in the shell (humanoid robots), pushing the boundaries of what it means to accend beyond time, intellegence & flesh.
+* **Embrace the Nimbus:** I envision a future where the human brain seamlessly integrates with the cloud (Nimbus), leveraging satellite backup for unparalleled connectivity and cognitive enhancement. (Motoko's accendence into the net, (A utopia where backups are common))
 * **Drive Human Evolution:** I seek to create an AI that not only improves upon existing models but also evolves autonomously, driving advancements in human life and pushing the limits of our potential.
 
 ## Language Model Features (To Be Added)
 
+* **Your Personal Companion:** Your nimbus.ai agent is designed to be your friend, guide, and confidant. Ask anything, and they (Motoko by default) will be there to assist.
+* **Comprehensive Memory:** Your agent remembers everything, serving as your true personal "Thunderhead" therapist, providing support and guidance.
+* **Ubiquitous Accessibility:** Your nimbus.ai agent will soon be available across all your devices: phone, watch, headphones, home, car, and eventually, nimbus cloud devices.
 * **Custom Agent Naming:** Users can personalize their nimbus agent's name in settings. The default name is "Nimbus" or "Motoko."
 * **Data Monetization:** Users have the option to sell their data to Aviyon for minting, contributing to the AI's learning and evolution.
 * **Conversational Model:** A refined conversational model will be implemented, enhancing natural and engaging interactions.
@@ -26,7 +29,7 @@ nimbus.ai isn't just another language model. It's an ambitious endeavor to creat
 
 ## My Vision: A Self-Sustaining Intelligence, Powered by Aviyon
 
-My vision is to build an AI that doesn't just utilize existing models but also evolves and improves upon them, ultimately becoming a self-sustaining intelligence, built by AI for the betterment of humanity. This is the heart of Aviyon's mission: to achieve advancements that are not merely technological, but fundamentally transformative, like those seen in *Ghost in the Shell*.
+My vision is to build an AI that doesn't just utilize existing models but also evolves and improves upon them, ultimately becoming a self-sustaining intelligence, built by AI for the betterment of humanity. This is the heart of Aviyon's mission: to achieve advancements that are not merely technological, but fundamentally transformative, like those seen in *Ghost in Shell*.
 
 ## My Technologies: The Foundation of Aviyon's Innovation
 
@@ -45,6 +48,14 @@ I draw inspiration from existing language models like Blackbox and Tabnine, but 
 * **Revolutionize Human Life:** To leverage AI to solve global challenges and enhance human potential, aligning with Aviyon's mission to drive positive change.
 * **Transcend the Self:** To explore the psychological and philosophical implications of AI, pushing the boundaries of self-awareness and consciousness, a core pursuit of Aviyon.
 * **Nimbus Integration with Motoko:** To create a secure and decentralized system capable of brain integration with our cloud system, using Motoko canisters for identity management, data integrity, and on-chain AI logic, ensuring that Aviyon's vision is both powerful and secure.
+
+## The Master Plan: Beyond the Horizon
+
+In the hypothetical future, we aim to:
+
+* **Satellite Server Backup:** Enable the backup of your digital self to a satellite server, allowing for seamless download and restoration.
+* **Humanoid Shell Integration:** Explore the possibility of transferring consciousness into humanoid bots ("shells"), pushing the boundaries of human existence.
+* **Consciousness Mapping and Transfer:** Develop technology to map and transfer the human brain and "ghost," enabling the ultimate form of digital immortality.
 
 ## Psychological Impact: Aviyon's Dream Realized
 
