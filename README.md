@@ -15,6 +15,15 @@ nimbus.ai isn't just another language model. It's an ambitious endeavor to creat
 * **Embrace the Nimbus:** I envision a future where the human brain seamlessly integrates with the cloud (Nimbus), leveraging satellite backup for unparalleled connectivity and cognitive enhancement.
 * **Drive Human Evolution:** I seek to create an AI that not only improves upon existing models but also evolves autonomously, driving advancements in human life and pushing the limits of our potential.
 
+## Language Model Features (To Be Added)
+
+* **Custom Agent Naming:** Users can personalize their nimbus agent's name in settings. The default name is "Nimbus" or "Motoko."
+* **Data Monetization:** Users have the option to sell their data to Aviyon for minting, contributing to the AI's learning and evolution.
+* **Conversational Model:** A refined conversational model will be implemented, enhancing natural and engaging interactions.
+* **Audio Playback Control:** Hovering over AI messages will provide play/pause options for audio output.
+* **Conversate Feature:** A dedicated "Conversate" button with an icon and page will be added for seamless conversational interaction.
+* **Message Timestamp and Agent Attribution:** Message sent dates and agent names (or "Thunderhead" if applicable) will be displayed in the message area.
+
 ## My Vision: A Self-Sustaining Intelligence, Powered by Aviyon
 
 My vision is to build an AI that doesn't just utilize existing models but also evolves and improves upon them, ultimately becoming a self-sustaining intelligence, built by AI for the betterment of humanity. This is the heart of Aviyon's mission: to achieve advancements that are not merely technological, but fundamentally transformative, like those seen in *Ghost in the Shell*.
