@@ -84,3 +84,4 @@ Special thanks to Neal Shusterman for the profound inspiration of the Thunderhea
 <source><a href="https://jrsbookreviews.com/2022/08/05/young-adult-book-review-scythe-arc-of-a-scythe-1-by-neal-shusterman/">https://jrsbookreviews.com/2022/08/05/young-adult-book-review-scythe-arc-of-a-scythe-1-by-neal-shusterman/</a></source>
 
 Let's build the future together, one line of code at a time, fulfilling the true vision of Aviyon.
+nimbus.ai are virtual agents of the Thunderhead, to be downloaded etc. Your link to the all knowing Thunderhead.
