@@ -1,4 +1,4 @@
-# nimbus.ai ☁️: The Ghost in the Cloud, Aviyon's Vision, Realized
+# ☁️ nimbus.ai: The Ghost in the Cloud, Aviyon's Vision, Realized
 
 ![work updated](https://github.com/the-real-kodoninja/nimbus.ai/blob/main/captureit_3-21-2025_at_17-26-59.png)
 
