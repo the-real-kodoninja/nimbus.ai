@@ -15,7 +15,7 @@ nimbus.ai isn't just another language model. It's an ambitious endeavor to creat
 * **Embrace the Nimbus:** I envision a future where the human brain seamlessly integrates with the cloud (Nimbus), leveraging satellite backup for unparalleled connectivity and cognitive enhancement. (Motoko's accendence into the net, (A utopia where backups are common))
 * **Drive Human Evolution:** I seek to create an AI that not only improves upon existing models but also evolves autonomously, driving advancements in human life and pushing the limits of our potential.
 * **Aviyon & The kodoverse:** To feature on all Aviyon social platforms & products.
-* **Supercomputer Infrastructure:** nimbus.ai to leverages a supercomputer infrastructure developed by Aviyon Corporation called the Thunderhead. TBA
+* **Supercomputer Infrastructure:** nimbus.ai to leverage a supercomputer infrastructure developed by Aviyon Corporation called the Thunderhead. More information TBA
 
 ## Language Model Features (To Be Added)
 
