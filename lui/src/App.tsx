@@ -6,7 +6,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase';
 import LanguageModelUI from './components/LanguageModelUI/LanguageModelUI';
 import HistoryLog from './pages/HistoryLog';
-import UserProfile from './pages/UserProfile';
+import UserProfile from './pages/userProfile';
 import Settings from './pages/Settings';
 import LoginSignup from './pages/LoginSignup';
 

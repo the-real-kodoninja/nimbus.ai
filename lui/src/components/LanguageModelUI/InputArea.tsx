@@ -11,6 +11,7 @@ import {
   Button,
   Tooltip,
   Chip,
+  SelectChangeEvent,
 } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import UploadIcon from '@mui/icons-material/Upload';
@@ -31,7 +32,7 @@ interface Props {
   onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveFile: (file: File) => void;
   onViewFile: (file: File) => void;
-  onModelChange: (event: React.ChangeEvent<{ value: unknown }>) => void;
+  onModelChange: (event: SelectChangeEvent<string>) => void;
   onThunderClick: () => void;
 }
 

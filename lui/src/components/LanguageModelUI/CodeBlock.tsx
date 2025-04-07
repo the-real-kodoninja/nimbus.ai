@@ -50,20 +50,28 @@ const CodeBlock: React.FC<Props> = ({ code, language, index, collapsedBlocks, on
 
   const formatCode = () => {
     try {
-      let parser;
-      if (language === 'javascript' || language === 'jsx') parser = 'babel';
-      else if (language === 'html') parser = 'html';
-      else if (language === 'css') parser = 'css';
-      else return;
+      let parser: 'babel' | 'html' | 'css' | undefined;
+
+      if (language === 'javascript' || language === 'jsx') {
+        parser = 'babel';
+      } else if (language === 'html') {
+        parser = 'html';
+      } else if (language === 'css') {
+        parser = 'css';
+      } else {
+        console.warn(`Unsupported language for formatting: ${language}`);
+        return;
+      }
 
       const formatted = prettier.format(code, {
         parser,
-        plugins: [parserBabel, parserHtml, parserCss],
+        plugins: [parserBabel, parserHtml, parserCss] as prettier.Plugin[],
         tabWidth: 2,
         useTabs: false,
         semi: true,
         singleQuote: true,
       });
+
       setFormattedCode(formatted);
     } catch (error) {
       console.error('Error formatting code:', error);

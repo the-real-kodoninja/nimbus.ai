@@ -4,7 +4,7 @@ import { Box } from '@mui/material';
 import axios from 'axios';
 import axiosRateLimit from 'axios-rate-limit';
 import DOMPurify from 'dompurify';
-import { doc, setDoc, getDoc, collection, getDocs, addDoc, Timestamp } from 'firebase/firestore';
+import { doc, setDoc, collection, getDocs, addDoc, Timestamp } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
 import AppHeader from './AppHeader';
 import ThreadSidebar from './ThreadSidebar';
@@ -25,7 +25,6 @@ interface Props {
 
 const LanguageModelUI: React.FC<Props> = ({ onThemeToggle, isDarkTheme, userSettings, setUserSettings }) => {
   const [input, setInput] = useState<string>('');
-  const [response, setResponse] = useState<string>('');
   const [threads, setThreads] = useState<Thread[]>([]);
   const [currentThread, setCurrentThread] = useState<string | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -123,6 +122,43 @@ const LanguageModelUI: React.FC<Props> = ({ onThemeToggle, isDarkTheme, userSett
     window.speechSynthesis.speak(utterance);
   };
 
+  const fetchRepoContent = async (repoUrl: string): Promise<string> => {
+    try {
+      const platform = repoUrl.includes('github') ? 'github' : 'gitlab';
+      let apiUrl: string;
+      let projectId: string | undefined;
+
+      if (platform === 'github') {
+        const [, owner, repo] = repoUrl.match(/github\.com\/([\w-]+)\/([\w-]+)/) || [];
+        apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents`;
+      } else {
+        const [, projectPath] = repoUrl.match(/gitlab\.com\/([\w-\/]+)/) || [];
+        projectId = projectPath;
+        apiUrl = `https://gitlab.com/api/v4/projects/${encodeURIComponent(projectId)}/repository/tree`;
+      }
+
+      const response = await http.get(apiUrl, {
+        headers: platform === 'github' ? { Accept: 'application/vnd.github.v3+json' } : {},
+      });
+
+      const files = response.data;
+      let contentSummary = '';
+      for (const file of files.slice(0, 5)) {
+        const fileUrl =
+          platform === 'github'
+            ? file.download_url
+            : `https://gitlab.com/api/v4/projects/${encodeURIComponent(projectId!)}/repository/files/${encodeURIComponent(file.path)}/raw`;
+        if (fileUrl) {
+          const fileContent = await http.get(fileUrl);
+          contentSummary += `- **${file.name}**:\n\`\`\`\n${fileContent.data.slice(0, 200)}...\n\`\`\`\n`;
+        }
+      }
+      return contentSummary || 'No readable files found.';
+    } catch (error: any) {
+      throw new Error('Failed to fetch repository content.');
+    }
+  };
+
   const handleSubmit = async () => {
     const sanitizedInput = DOMPurify.sanitize(input);
     if (!sanitizedInput.trim() && files.length === 0) {
@@ -143,9 +179,9 @@ const LanguageModelUI: React.FC<Props> = ({ onThemeToggle, isDarkTheme, userSett
     );
 
     let messageToSend = sanitizedInput;
-    let fileDataToSend = fileContents.map(f => ({ name: f.name, type: f.type, content: f.content }));
+    let fileDataToSend = fileContents.map((f) => ({ name: f.name, type: f.type, content: f.content }));
 
-    const repoMatch = messageToSend.match(/(https?:\/\/(github|gitlab)\.com\/[\w-]+\/[\w-]+\/?)/);
+    const repoMatch = messageToSend.match(/(https?:(\/\/)(github|gitlab)\.com\/[\w-]+\/[\w-]+\/?)/);
     if (repoMatch) {
       const repoUrl = repoMatch[0];
       try {
@@ -166,8 +202,10 @@ const LanguageModelUI: React.FC<Props> = ({ onThemeToggle, isDarkTheme, userSett
 
     if (isThunderClicked) {
       setIsThunderActive(true);
-      setResponse('');
-      setHistory([...history, { query: messageToSend, files: fileDataToSend, response: `${userSettings.aiName} is asking the Thunderhead...`, date: new Date() }]);
+      setHistory([
+        ...history,
+        { query: messageToSend, files: fileDataToSend, response: `${userSettings.aiName} is asking the Thunderhead...`, date: new Date() },
+      ]);
     } else {
       setHistory([...history, { query: messageToSend, files: fileDataToSend, response: '', date: new Date() }]);
     }
@@ -179,7 +217,6 @@ const LanguageModelUI: React.FC<Props> = ({ onThemeToggle, isDarkTheme, userSett
     if (aiResponse.includes('I encountered an error')) {
       setErrorMessage(aiResponse);
     } else {
-      setResponse(aiResponse);
       setHistory((prevHistory) => {
         const updatedHistory = [...prevHistory];
         updatedHistory[updatedHistory.length - 1].response = aiResponse;
@@ -197,37 +234,6 @@ const LanguageModelUI: React.FC<Props> = ({ onThemeToggle, isDarkTheme, userSett
       reader.onload = () => resolve(reader.result as string);
       reader.readAsDataURL(file);
     });
-  };
-
-  const fetchRepoContent = async (repoUrl: string): Promise<string> => {
-    try {
-      const platform = repoUrl.includes('github') ? 'github' : 'gitlab';
-      let apiUrl: string;
-      if (platform === 'github') {
-        const [, owner, repo] = repoUrl.match(/github\.com\/([\w-]+)\/([\w-]+)/) || [];
-        apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents`;
-      } else {
-        const [, projectId] = repoUrl.match(/gitlab\.com\/([\w-\/]+)/) || [];
-        apiUrl = `https://gitlab.com/api/v4/projects/${encodeURIComponent(projectId)}/repository/tree`;
-      }
-
-      const response = await http.get(apiUrl, {
-        headers: platform === 'github' ? { Accept: 'application/vnd.github.v3+json' } : {},
-      });
-
-      const files = response.data;
-      let contentSummary = '';
-      for (const file of files.slice(0, 5)) {
-        const fileUrl = platform === 'github' ? file.download_url : `https://gitlab.com/api/v4/projects/${encodeURIComponent(projectId)}/repository/files/${encodeURIComponent(file.path)}/raw`;
-        if (fileUrl) {
-          const fileContent = await http.get(fileUrl);
-          contentSummary += `- **${file.name}**:\n\`\`\`\n${fileContent.data.slice(0, 200)}...\n\`\`\`\n`;
-        }
-      }
-      return contentSummary || 'No readable files found.';
-    } catch (error: any) {
-      throw new Error('Failed to fetch repository content.');
-    }
   };
 
   const fetchAIResponse = async (message: string, fileData: FileContent[]): Promise<string> => {

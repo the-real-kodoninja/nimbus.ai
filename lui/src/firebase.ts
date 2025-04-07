@@ -11,12 +11,13 @@ const firebaseConfig: {
   messagingSenderId: string;
   appId: string;
 } = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID",
+  apiKey: "AIzaSyANJpaIuPfg_27Q_6S9w0HaYEcuAQVSZ6g",
+  authDomain: "nimbus-ai-ac285.firebaseapp.com",
+  projectId: "nimbus-ai-ac285",
+  storageBucket: "nimbus-ai-ac285.firebasestorage.app",
+  messagingSenderId: "314036518981",
+  appId: "1:314036518981:web:7a700e320dea2fa88f632c",
+  // measurementId: "G-K3LNZHXHNZ",
 };
 
 // Initialize Firebase app

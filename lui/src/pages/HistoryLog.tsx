@@ -11,7 +11,6 @@ import {
   Toolbar,
   Paper,
   Divider,
-  Chip,
   Collapse,
   Button,
 } from '@mui/material';
