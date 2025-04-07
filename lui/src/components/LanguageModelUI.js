@@ -12,6 +12,9 @@ import {
   MenuItem,
   Tooltip,
   Avatar,
+  FormControl,
+  InputLabel,
+  Select,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
@@ -22,6 +25,11 @@ import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import SettingsIcon from '@mui/icons-material/Settings';
 import HistoryIcon from '@mui/icons-material/History';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { dark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 const CloudSVG = ({ isDarkTheme }) => (
   <svg
@@ -45,7 +53,8 @@ const LanguageModelUI = ({ onThemeToggle, isDarkTheme }) => {
   const [isThunderActive, setIsThunderActive] = useState(false);
   const [isThunderClicked, setIsThunderClicked] = useState(false);
   const [isInputEmpty, setIsInputEmpty] = useState(false);
-  const [fileContent, setFileContent] = useState(''); // New state for file content
+  const [fileContent, setFileContent] = useState('');
+  const [selectedModel, setSelectedModel] = useState('google/flan-t5-small');
   const navigate = useNavigate();
 
   const handleSubmit = async () => {
@@ -55,50 +64,49 @@ const LanguageModelUI = ({ onThemeToggle, isDarkTheme }) => {
       return;
     }
 
+    const messageToSend = fileContent ? `${input}\n\nFile Content:\n${fileContent}` : input;
+    setInput('');
+    setFileContent('');
+    setShowWelcome(false);
+
     if (isThunderClicked) {
       setIsThunderActive(true);
       setResponse('');
-      const messageToSend = fileContent ? `${input}\n\nFile Content:\n${fileContent}` : input;
-      setHistory([...history, { query: messageToSend, response: 'Your nimbus agent is asking the Thunderhead...', date: new Date() }]);
-      setInput('');
-      setFileContent(''); // Clear file content after submission
-      setShowWelcome(false);
-
-      const aiResponse = await fetchAIResponse(messageToSend);
-      setResponse(aiResponse);
-      setHistory((prevHistory) => {
-        const updatedHistory = [...prevHistory];
-        updatedHistory[updatedHistory.length - 1].response = aiResponse;
-        return updatedHistory;
-      });
-      setIsThunderActive(false);
-      setIsThunderClicked(false);
+      setHistory([...history, { query: messageToSend, response: 'Nimbus.ai is asking the Thunderhead...', date: new Date() }]);
     } else {
-      const messageToSend = fileContent ? `${input}\n\nFile Content:\n${fileContent}` : input;
       setHistory([...history, { query: messageToSend, response: '', date: new Date() }]);
-      setInput('');
-      setFileContent('');
-      setShowWelcome(false);
     }
+
+    const aiResponse = await fetchAIResponse(messageToSend);
+    setResponse(aiResponse);
+    setHistory((prevHistory) => {
+      const updatedHistory = [...prevHistory];
+      updatedHistory[updatedHistory.length - 1].response = aiResponse;
+      return updatedHistory;
+    });
+
+    setIsThunderActive(false);
+    setIsThunderClicked(false);
   };
 
   const fetchAIResponse = async (input) => {
     try {
-      const response = await fetch('http://localhost:8001/api/nimbus', {
+      const response = await fetch('https://nimbus-ai-backend.vercel.app/api/nimbus', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           message: input,
-          context: '' // No specific context for LUI
+          context: '',
+          model: selectedModel,
         }),
       });
-
+  
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
-
+  
       const data = await response.json();
       return data.response;
     } catch (error) {
@@ -136,8 +144,17 @@ const LanguageModelUI = ({ onThemeToggle, isDarkTheme }) => {
       reader.onload = (e) => {
         setFileContent(e.target.result);
       };
-      reader.readAsText(file); // For now, we'll assume text files
+      reader.readAsText(file);
     }
+  };
+
+  const handleModelChange = (event) => {
+    setSelectedModel(event.target.value);
+  };
+
+  const handleCopyCode = (code) => {
+    navigator.clipboard.writeText(code);
+    alert('Code copied to clipboard!');
   };
 
   const wordCount = input.split(/\s+/).filter((word) => word.length > 0).length;
@@ -160,29 +177,90 @@ const LanguageModelUI = ({ onThemeToggle, isDarkTheme }) => {
       </AppBar>
 
       <Box sx={{ flexGrow: 1, padding: 4, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center', marginTop: -4, marginBottom: -3 }}>
-        <Paper elevation={3} sx={{ flexGrow: 1, width: '100%', maxWidth: 636, marginTop: 2, padding: 2, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
-          <Box sx={{ overflowY: 'auto', flexGrow: 1 }}>
+        <Paper
+          elevation={0}  // Remove elevation to remove shadow
+          sx={{
+            flexGrow: 1,
+            width: '100%',
+            maxWidth: 636,
+            marginTop: 2,
+            padding: 2,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-start',
+            backgroundColor: 'transparent',  // Make background transparent
+          }}
+        >
+          <Box sx={{ overflowY: 'auto', flexGrow: 1, maxHeight: '60vh' }}>  {/* Ensure scrolling for long content */}
             {showWelcome ? (
               <Typography variant="body1" align="center" sx={{ color: isDarkTheme ? 'text.secondary' : 'text.primary', marginTop: 2 }}>
                 Welcome to Nimbus.ai an agent of the Thunderhead! Ask me anything.
               </Typography>
             ) : (
               history.map((item, index) => (
-                <Box key={index} sx={{ display: 'flex', flexDirection: 'column', alignItems: item.query ? 'flex-end' : 'flex-start', marginBottom: 2 }}>
+                <Box key={index} sx={{ display: 'flex', flexDirection: 'column', marginBottom: 2 }}>
                   {item.query && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: 1 }}>
-                      <Avatar sx={{ marginRight: 1 }}>{/* User's avatar */}</Avatar>
-                      <Typography variant="body2" sx={{ backgroundColor: 'primary.light', padding: 1, borderRadius: 1, color: 'text.primary', maxWidth: '80%', overflowY: 'auto' }}>
-                        {item.query}
-                      </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: 1, width: '100%' }}>
+                      <Avatar sx={{ marginRight: 1 }} />
+                      <Box
+                        sx={{
+                          backgroundColor: 'primary.light',
+                          padding: 1,
+                          borderRadius: 1,
+                          color: 'text.primary',
+                          width: '100%',  // Full width for sent messages
+                          overflowWrap: 'break-word',
+                        }}
+                      >
+                        <Typography variant="body2">{item.query}</Typography>
+                      </Box>
                     </Box>
                   )}
                   {item.response && (
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Typography variant="body2" sx={{ backgroundColor: 'background.paper', padding: 1, borderRadius: 1, color: 'text.secondary', maxWidth: '80%', overflowY: 'auto' }}>
-                        {item.response}
-                      </Typography>
-                      <Avatar sx={{ marginLeft: 1 }}>{/* Nimbus agent's avatar */}</Avatar>
+                    <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                      <Box
+                        sx={{
+                          padding: 1,
+                          borderRadius: 1,
+                          color: 'text.secondary',
+                          width: '100%',  // Full width for responses
+                          overflowWrap: 'break-word',
+                        }}
+                      >
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            code({ node, inline, className, children, ...props }) {
+                              const match = /language-(\w+)/.exec(className || '');
+                              return !inline && match ? (
+                                <Box sx={{ position: 'relative' }}>
+                                  <SyntaxHighlighter
+                                    style={dark}
+                                    language={match[1]}
+                                    PreTag="div"
+                                    {...props}
+                                  >
+                                    {String(children).replace(/\n$/, '')}
+                                  </SyntaxHighlighter>
+                                  <IconButton
+                                    sx={{ position: 'absolute', top: 8, right: 8 }}
+                                    onClick={() => handleCopyCode(String(children))}
+                                  >
+                                    <ContentCopyIcon fontSize="small" />
+                                  </IconButton>
+                                </Box>
+                              ) : (
+                                <code className={className} {...props}>
+                                  {children}
+                                </code>
+                              );
+                            },
+                          }}
+                        >
+                          {item.response}
+                        </ReactMarkdown>
+                      </Box>
+                      <Avatar sx={{ marginLeft: 1 }} />
                     </Box>
                   )}
                 </Box>
@@ -235,9 +313,26 @@ const LanguageModelUI = ({ onThemeToggle, isDarkTheme }) => {
             </IconButton>
           </Box>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', marginTop: 1, width: '100%' }}>
-            <Typography variant="body2" sx={{ color: isDarkTheme ? 'text.secondary' : 'text.primary' }}>
-              Word Count: {wordCount}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <FormControl sx={{ minWidth: 150, marginRight: 2 }}>
+                <InputLabel id="model-select-label">Model</InputLabel>
+                <Select
+                  labelId="model-select-label"
+                  id="model-select"
+                  value={selectedModel}
+                  label="Model"
+                  onChange={handleModelChange}
+                >
+                  <MenuItem value="distilgpt2">DistilGPT2</MenuItem>
+                  <MenuItem value="facebook/opt-125m">OPT-125M</MenuItem>
+                  <MenuItem value="google/flan-t5-small">Flan-T5-Small</MenuItem>
+                  <MenuItem value="google/flan-t5-base">Flan-T5-Base</MenuItem>
+                </Select>
+              </FormControl>
+              <Typography variant="body2" sx={{ color: isDarkTheme ? 'text.secondary' : 'text.primary' }}>
+                Word Count: {wordCount}
+              </Typography>
+            </Box>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <input
                 accept=".txt"
