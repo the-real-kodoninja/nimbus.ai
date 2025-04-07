@@ -15,7 +15,7 @@ import {
 import { styled } from '@mui/system';
 import { motion } from 'framer-motion';
 
-const StyledPaper = styled(Paper)(({ theme }) => ({
+const StyledPaper = styled(Paper)(({ theme }: { theme: any }) => ({
   background: 'linear-gradient(45deg, #6a1b9a 30%, #9c27b0 90%)',
   padding: theme.spacing(4),
   borderRadius: 16,
@@ -59,25 +59,29 @@ const StyledButton = styled(Button)({
   },
 });
 
-const LoginSignup = ({ setIsLoggedIn }) => {
+interface Props {
+  setIsLoggedIn: (isLoggedIn: boolean) => void;
+}
+
+const LoginSignup: React.FC<Props> = ({ setIsLoggedIn }) => {
   const navigate = useNavigate();
-  const [tab, setTab] = useState(0);
-  const [formData, setFormData] = useState({
+  const [tab, setTab] = useState<number>(0);
+  const [formData, setFormData] = useState<{ email: string; password: string; username: string }>({
     email: '',
     password: '',
     username: '',
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string>('');
 
-  const handleTabChange = (event, newValue) => {
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTab(newValue);
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     try {
@@ -92,7 +96,7 @@ const LoginSignup = ({ setIsLoggedIn }) => {
         setIsLoggedIn(true);
         navigate('/');
       }
-    } catch (err) {
+    } catch (err: any) {
       setError(err.message);
     }
   };
@@ -135,44 +139,44 @@ const LoginSignup = ({ setIsLoggedIn }) => {
             </Typography>
           )}
           <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <form onSubmit={handleSubmit}>
-            {tab === 1 && (
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <form onSubmit={handleSubmit}>
+              {tab === 1 && (
+                <StyledTextField
+                  label="Username"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  fullWidth
+                  sx={{ marginBottom: 2 }}
+                />
+              )}
               <StyledTextField
-                label="Username"
-                name="username"
-                value={formData.username}
+                label="Email"
+                name="email"
+                type="email"
+                value={formData.email}
                 onChange={handleInputChange}
                 fullWidth
                 sx={{ marginBottom: 2 }}
               />
-            )}
-            <StyledTextField
-              label="Email"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              fullWidth
-              sx={{ marginBottom: 2 }}
-            />
-            <StyledTextField
-              label="Password"
-              name="password"
-              type="password"
-              value={formData.password}
-              onChange={handleInputChange}
-              fullWidth
-              sx={{ marginBottom: 2 }}
-            />
-            <StyledButton type="submit">
-              {tab === 0 ? 'Login' : 'Signup'}
-            </StyledButton>
-          </form>
-        </motion.div>
+              <StyledTextField
+                label="Password"
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                fullWidth
+                sx={{ marginBottom: 2 }}
+              />
+              <StyledButton type="submit">
+                {tab === 0 ? 'Login' : 'Signup'}
+              </StyledButton>
+            </form>
+          </motion.div>
         </StyledPaper>
       </Fade>
     </Box>

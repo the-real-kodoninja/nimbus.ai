@@ -13,6 +13,7 @@ import {
   Divider,
   Chip,
   Collapse,
+  Button,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -20,23 +21,44 @@ import AccountCircle from '@mui/icons-material/AccountCircle';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 
-const HistoryLog = ({ isDarkTheme, history, setHistory }) => {
+interface HistoryItem {
+  query: string;
+  response: string;
+  date: string;
+}
+
+interface UserSettings {
+  aiName: string;
+  voice: string;
+}
+
+interface Props {
+  isDarkTheme: boolean;
+  history: HistoryItem[];
+  setHistory: (history: HistoryItem[]) => void;
+  userSettings: UserSettings;
+}
+
+const HistoryLog: React.FC<Props> = ({ isDarkTheme, history, setHistory, userSettings }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const historyData = location.state?.history || history || [];
-  const [expandedItems, setExpandedItems] = useState({});
+  const historyData: HistoryItem[] = location.state?.history || history || [];
+  const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>({});
 
-  const handleDelete = (index) => {
+  const handleDelete = (index: number) => {
     const updatedHistory = historyData.filter((_, i) => i !== index);
     setHistory(updatedHistory);
   };
 
-  const toggleExpand = (index) => {
+  const toggleExpand = (index: number) => {
     setExpandedItems((prev) => ({ ...prev, [index]: !prev[index] }));
   };
 
-  // Psychological profiling based on queries
-  const generatePsychProfile = (query) => {
+  const handleClearHistory = () => {
+    setHistory([]);
+  };
+
+  const generatePsychProfile = (query: string) => {
     if (query.toLowerCase().includes('code') || query.toLowerCase().includes('program')) {
       return {
         trait: 'Analytical Thinker',
@@ -82,43 +104,54 @@ const HistoryLog = ({ isDarkTheme, history, setHistory }) => {
           <Typography variant="body2" align="center" sx={{ color: 'text.secondary', marginBottom: 2 }}>
             The Thunderhead has recorded your interactions, preserving them as a digital consciousness, much like a Ghost in the Shell.
           </Typography>
-          <List>
-            {historyData.map((item, index) => {
-              const psychProfile = generatePsychProfile(item.query);
-              return (
-                <React.Fragment key={index}>
-                  <ListItem sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <ListItemText
-                      primary={`Query: ${item.query}`}
-                      secondary={`Date: ${new Date(item.date).toLocaleString()}`}
-                    />
-                    <Box>
-                      <IconButton onClick={() => toggleExpand(index)}>
-                        {expandedItems[index] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                      </IconButton>
-                      <IconButton edge="end" color="inherit" onClick={() => handleDelete(index)}>
-                        <DeleteIcon />
-                      </IconButton>
-                    </Box>
-                  </ListItem>
-                  <Collapse in={expandedItems[index]}>
-                    <Box sx={{ padding: 2, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', borderRadius: 2, marginBottom: 1 }}>
-                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                        <strong>Response:</strong> {item.response}
-                      </Typography>
-                      <Typography variant="body2" sx={{ marginTop: 1 }}>
-                        <strong>Thunderhead Analysis:</strong> {psychProfile.thunderheadInsight}
-                      </Typography>
-                      <Typography variant="body2" sx={{ marginTop: 1 }}>
-                        <strong>Psychological Profile:</strong> {psychProfile.trait} - {psychProfile.description}
-                      </Typography>
-                    </Box>
-                  </Collapse>
-                  <Divider />
-                </React.Fragment>
-              );
-            })}
-          </List>
+          {historyData.length === 0 ? (
+            <Typography variant="body2" align="center" sx={{ color: 'text.secondary' }}>
+              No history available.
+            </Typography>
+          ) : (
+            <List>
+              {historyData.map((item, index) => {
+                const psychProfile = generatePsychProfile(item.query);
+                return (
+                  <React.Fragment key={index}>
+                    <ListItem sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <ListItemText
+                        primary={`Query: ${item.query}`}
+                        secondary={`Date: ${new Date(item.date).toLocaleString()}`}
+                      />
+                      <Box>
+                        <IconButton onClick={() => toggleExpand(index)}>
+                          {expandedItems[index] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                        </IconButton>
+                        <IconButton edge="end" color="inherit" onClick={() => handleDelete(index)}>
+                          <DeleteIcon />
+                        </IconButton>
+                      </Box>
+                    </ListItem>
+                    <Collapse in={expandedItems[index]}>
+                      <Box sx={{ padding: 2, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', borderRadius: 2, marginBottom: 1 }}>
+                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                          <strong>Response:</strong> {item.response}
+                        </Typography>
+                        <Typography variant="body2" sx={{ marginTop: 1 }}>
+                          <strong>Thunderhead Analysis:</strong> {psychProfile.thunderheadInsight}
+                        </Typography>
+                        <Typography variant="body2" sx={{ marginTop: 1 }}>
+                          <strong>Psychological Profile:</strong> {psychProfile.trait} - {psychProfile.description}
+                        </Typography>
+                      </Box>
+                    </Collapse>
+                    <Divider />
+                  </React.Fragment>
+                );
+              })}
+            </List>
+          )}
+          {historyData.length > 0 && (
+            <Button variant="contained" color="error" onClick={handleClearHistory} sx={{ marginTop: 2 }}>
+              Clear History
+            </Button>
+          )}
         </Paper>
       </Box>
     </Box>

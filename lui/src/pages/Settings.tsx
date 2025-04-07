@@ -19,9 +19,20 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SaveIcon from '@mui/icons-material/Save';
 
-const Settings = ({ isDarkTheme, userSettings, setUserSettings }) => {
+interface UserSettings {
+  aiName: string;
+  voice: string;
+}
+
+interface Props {
+  isDarkTheme: boolean;
+  userSettings: UserSettings;
+  setUserSettings: (settings: UserSettings) => void;
+}
+
+const Settings: React.FC<Props> = ({ isDarkTheme, userSettings, setUserSettings }) => {
   const navigate = useNavigate();
-  const [settings, setSettings] = useState({
+  const [settings, setSettings] = useState<UserSettings>({
     aiName: userSettings?.aiName || 'Nimbus.ai',
     voice: userSettings?.voice || 'default',
   });
@@ -32,14 +43,14 @@ const Settings = ({ isDarkTheme, userSettings, setUserSettings }) => {
         const userDoc = doc(db, 'users', auth.currentUser.uid);
         const docSnap = await getDoc(userDoc);
         if (docSnap.exists()) {
-          const data = docSnap.data();
+          const data = docSnap.data() as UserSettings;
           setSettings(data);
           setUserSettings(data);
         }
       }
     };
     fetchSettings();
-  }, []);
+  }, [setUserSettings]);
 
   const handleSave = async () => {
     if (auth.currentUser) {
@@ -50,7 +61,7 @@ const Settings = ({ isDarkTheme, userSettings, setUserSettings }) => {
     }
   };
 
-  const handleChange = (key, value) => {
+  const handleChange = (key: keyof UserSettings, value: string) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -58,10 +69,24 @@ const Settings = ({ isDarkTheme, userSettings, setUserSettings }) => {
     <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <AppBar position="static" sx={{ backgroundColor: 'background.paper' }}>
         <Toolbar>
-          <IconButton edge="start" color="inherit" onClick={() => navigate(-1)} sx={{ color: isDarkTheme ? 'inherit' : 'text.primary' }}>
+          <IconButton
+            edge="start"
+            color="inherit"
+            onClick={() => navigate(-1)}
+            sx={{ color: isDarkTheme ? 'inherit' : 'text.primary' }}
+          >
             <ArrowBackIcon />
           </IconButton>
-          <Typography variant="h6" sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', marginLeft: '8px', color: isDarkTheme ? 'inherit' : 'text.primary' }}>
+          <Typography
+            variant="h6"
+            sx={{
+              flexGrow: 1,
+              display: 'flex',
+              alignItems: 'center',
+              marginLeft: '8px',
+              color: isDarkTheme ? 'inherit' : 'text.primary',
+            }}
+          >
             Settings
           </Typography>
         </Toolbar>

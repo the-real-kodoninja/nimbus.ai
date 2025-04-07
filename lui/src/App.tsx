@@ -4,7 +4,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase';
-import LanguageModelUI from './components/LanguageModelUI';
+import LanguageModelUI from './components/LanguageModelUI/LanguageModelUI';
 import HistoryLog from './pages/HistoryLog';
 import UserProfile from './pages/UserProfile';
 import Settings from './pages/Settings';
