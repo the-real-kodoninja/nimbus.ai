@@ -9,11 +9,7 @@ import HistoryLog from './pages/HistoryLog';
 import UserProfile from './pages/userProfile';
 import Settings from './pages/Settings';
 import LoginSignup from './pages/LoginSignup';
-
-interface UserSettings {
-  aiName: string;
-  voice: string;
-}
+import { UserSettings } from './components/shared/types';
 
 const App: React.FC = () => {
   const [isDarkTheme, setIsDarkTheme] = useState<boolean>(true);
@@ -22,7 +18,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setIsAuthenticated(!!user);
+      setIsAuthenticated(user !== null); // Set authentication state based on user presence
     });
     return () => unsubscribe();
   }, []);
@@ -58,16 +54,14 @@ const App: React.FC = () => {
             path="/"
             element={
               isAuthenticated === null ? (
-                <div>Loading...</div>
-              ) : isAuthenticated ? (
+                <div>Loading...</div> // Show a loading state while checking authentication
+              ) : (
                 <LanguageModelUI
                   onThemeToggle={handleThemeToggle}
                   isDarkTheme={isDarkTheme}
                   userSettings={userSettings}
                   setUserSettings={setUserSettings}
                 />
-              ) : (
-                <LoginSignup setIsLoggedIn={(status) => setIsAuthenticated(status)} />
               )
             }
           />
@@ -101,7 +95,7 @@ const App: React.FC = () => {
           />
           <Route
             path="/login-signup"
-            element={<LoginSignup setIsLoggedIn={(status) => setIsAuthenticated(status)} />}
+            element={<LoginSignup />}
           />
         </Routes>
       </Router>

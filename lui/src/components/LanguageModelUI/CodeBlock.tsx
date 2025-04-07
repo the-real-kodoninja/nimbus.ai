@@ -67,7 +67,7 @@ const CodeBlock: React.FC<Props> = ({ code, language, index, collapsedBlocks, on
       // Format the code using Prettier
       const formatted = prettier.format(code, {
         parser,
-        plugins: [parserBabel, parserHtml, parserCss] as any[], // Use any[] to bypass type issue
+        plugins: [parserBabel, parserHtml, parserCss],
         tabWidth: 2,
         useTabs: false,
         semi: true,

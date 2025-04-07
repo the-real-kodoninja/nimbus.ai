@@ -129,13 +129,7 @@ const ChatArea: React.FC<Props> = ({
                             remarkPlugins={[remarkGfm]}
                             rehypePlugins={[rehypeSanitize]}
                             components={{
-                              code: ({
-                                node,
-                                inline,
-                                className,
-                                children,
-                                ...props
-                              }: React.ComponentProps<'code'> & { node: any }) => {
+                              code({ inline, className, children, ...props }) {
                                 const match = /language-(\w+)/.exec(className || '');
                                 const codeString = String(children).replace(/\n$/, '');
                                 const language = match ? match[1] : 'text';

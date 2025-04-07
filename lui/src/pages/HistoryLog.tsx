@@ -19,34 +19,26 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-
-interface HistoryItem {
-  query: string;
-  response: string;
-  date: string;
-}
-
-interface UserSettings {
-  aiName: string;
-  voice: string;
-}
+import { HistoryItem, UserSettings } from '../components/shared/types';
 
 interface Props {
   isDarkTheme: boolean;
-  history: HistoryItem[];
-  setHistory: (history: HistoryItem[]) => void;
   userSettings: UserSettings;
+  history?: HistoryItem[]; // Optional since it can be passed via state
+  setHistory?: React.Dispatch<React.SetStateAction<HistoryItem[]>>; // Optional
 }
 
-const HistoryLog: React.FC<Props> = ({ isDarkTheme, history, setHistory, userSettings }) => {
+const HistoryLog: React.FC<Props> = ({ isDarkTheme, userSettings, history = [], setHistory }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const historyData: HistoryItem[] = location.state?.history || history || [];
+  const historyData: HistoryItem[] = location.state?.history || history;
   const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>({});
 
   const handleDelete = (index: number) => {
-    const updatedHistory = historyData.filter((_, i) => i !== index);
-    setHistory(updatedHistory);
+    if (setHistory) {
+      const updatedHistory = historyData.filter((_, i) => i !== index);
+      setHistory(updatedHistory);
+    }
   };
 
   const toggleExpand = (index: number) => {
@@ -54,28 +46,8 @@ const HistoryLog: React.FC<Props> = ({ isDarkTheme, history, setHistory, userSet
   };
 
   const handleClearHistory = () => {
-    setHistory([]);
-  };
-
-  const generatePsychProfile = (query: string) => {
-    if (query.toLowerCase().includes('code') || query.toLowerCase().includes('program')) {
-      return {
-        trait: 'Analytical Thinker',
-        description: 'You exhibit a strong inclination towards problem-solving and logical reasoning, typical of a coder or engineer.',
-        thunderheadInsight: 'The Thunderhead observes your meticulous nature, akin to a Scythe ensuring precision in their gleaning.',
-      };
-    } else if (query.toLowerCase().includes('app') || query.toLowerCase().includes('design')) {
-      return {
-        trait: 'Creative Visionary',
-        description: 'You show a flair for creativity and innovation, often thinking about user experiences and aesthetics.',
-        thunderheadInsight: 'The Thunderhead sees your potential to create, much like the Toll’s vision for a new world order.',
-      };
-    } else {
-      return {
-        trait: 'Curious Explorer',
-        description: 'You have a broad curiosity, seeking knowledge across various domains.',
-        thunderheadInsight: 'The Thunderhead notes your inquisitive nature, reminiscent of a Ghost in the Shell, navigating the vast digital consciousness.',
-      };
+    if (setHistory) {
+      setHistory([]);
     }
   };
 
@@ -100,50 +72,38 @@ const HistoryLog: React.FC<Props> = ({ isDarkTheme, history, setHistory, userSet
           <Typography variant="h6" align="center" sx={{ marginBottom: 2 }}>
             Thunderhead Archives
           </Typography>
-          <Typography variant="body2" align="center" sx={{ color: 'text.secondary', marginBottom: 2 }}>
-            The Thunderhead has recorded your interactions, preserving them as a digital consciousness, much like a Ghost in the Shell.
-          </Typography>
           {historyData.length === 0 ? (
             <Typography variant="body2" align="center" sx={{ color: 'text.secondary' }}>
               No history available.
             </Typography>
           ) : (
             <List>
-              {historyData.map((item, index) => {
-                const psychProfile = generatePsychProfile(item.query);
-                return (
-                  <React.Fragment key={index}>
-                    <ListItem sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <ListItemText
-                        primary={`Query: ${item.query}`}
-                        secondary={`Date: ${new Date(item.date).toLocaleString()}`}
-                      />
-                      <Box>
-                        <IconButton onClick={() => toggleExpand(index)}>
-                          {expandedItems[index] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                        </IconButton>
-                        <IconButton edge="end" color="inherit" onClick={() => handleDelete(index)}>
-                          <DeleteIcon />
-                        </IconButton>
-                      </Box>
-                    </ListItem>
-                    <Collapse in={expandedItems[index]}>
-                      <Box sx={{ padding: 2, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', borderRadius: 2, marginBottom: 1 }}>
-                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                          <strong>Response:</strong> {item.response}
-                        </Typography>
-                        <Typography variant="body2" sx={{ marginTop: 1 }}>
-                          <strong>Thunderhead Analysis:</strong> {psychProfile.thunderheadInsight}
-                        </Typography>
-                        <Typography variant="body2" sx={{ marginTop: 1 }}>
-                          <strong>Psychological Profile:</strong> {psychProfile.trait} - {psychProfile.description}
-                        </Typography>
-                      </Box>
-                    </Collapse>
-                    <Divider />
-                  </React.Fragment>
-                );
-              })}
+              {historyData.map((item, index) => (
+                <React.Fragment key={index}>
+                  <ListItem sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <ListItemText
+                      primary={`Query: ${item.query}`}
+                      secondary={`Date: ${new Date(item.date).toLocaleString()}`}
+                    />
+                    <Box>
+                      <IconButton onClick={() => toggleExpand(index)}>
+                        {expandedItems[index] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                      </IconButton>
+                      <IconButton edge="end" color="inherit" onClick={() => handleDelete(index)}>
+                        <DeleteIcon />
+                      </IconButton>
+                    </Box>
+                  </ListItem>
+                  <Collapse in={expandedItems[index]}>
+                    <Box sx={{ padding: 2, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', borderRadius: 2, marginBottom: 1 }}>
+                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                        <strong>Response:</strong> {item.response}
+                      </Typography>
+                    </Box>
+                  </Collapse>
+                  <Divider />
+                </React.Fragment>
+              ))}
             </List>
           )}
           {historyData.length > 0 && (

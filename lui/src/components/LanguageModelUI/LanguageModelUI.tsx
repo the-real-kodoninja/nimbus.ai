@@ -4,7 +4,7 @@ import { Box } from '@mui/material';
 import axios from 'axios';
 import axiosRateLimit from 'axios-rate-limit';
 import DOMPurify from 'dompurify';
-import { doc, setDoc, collection, getDocs, addDoc, Timestamp, updateDoc } from 'firebase/firestore';
+import { doc, setDoc, collection, getDocs, addDoc, Timestamp, updateDoc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
 import AppHeader from './AppHeader';
 import ThreadSidebar from './ThreadSidebar';
@@ -123,6 +123,36 @@ const LanguageModelUI: React.FC<Props> = ({ onThemeToggle, isDarkTheme, userSett
 
     mergeGhostData();
   }, [guestId]);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user && guestId) {
+        mergeGuestData(user.uid);
+      }
+    });
+    return () => unsubscribe();
+  }, [guestId]);
+
+  const mergeGuestData = async (userId: string) => {
+    if (guestId) {
+      const guestThreadsRef = collection(db, `ghostUsers/${guestId}/threads`);
+      const userThreadsRef = collection(db, `users/${userId}/threads`);
+  
+      const guestThreadsSnapshot = await getDocs(guestThreadsRef);
+      for (const guestDoc of guestThreadsSnapshot.docs) {
+        const guestThreadData = guestDoc.data();
+        // Use Firestore's `doc` function to create a reference
+        const userThreadDocRef = doc(userThreadsRef, guestDoc.id);
+        await setDoc(userThreadDocRef, guestThreadData);
+      }
+  
+      // Delete guest data after merging
+      for (const guestDoc of guestThreadsSnapshot.docs) {
+        const guestThreadDocRef = doc(guestThreadsRef, guestDoc.id);
+        await deleteDoc(guestThreadDocRef);
+      }
+    }
+  };
 
   const createNewThread = async () => {
     const userId = auth.currentUser?.uid || guestId;

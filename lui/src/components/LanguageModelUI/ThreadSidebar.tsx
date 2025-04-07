@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Button, List, ListItemButton, ListItemText } from '@mui/material';
-import { Thread, HistoryItem } from '../shared/types'; // Import Thread and HistoryItem
+import { Thread } from '../shared/types'; // Import Thread and HistoryItem
 import { Timestamp } from 'firebase/firestore';
 
 interface Props {

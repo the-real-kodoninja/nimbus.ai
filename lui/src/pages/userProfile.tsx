@@ -3,9 +3,14 @@ import { Box, Typography, List, ListItem, ListItemText, Button } from '@mui/mate
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../firebase';
 import { collection, getDocs, Timestamp } from 'firebase/firestore';
-import { Thread, HistoryItem } from '../components/shared/types';
+import { Thread, UserSettings } from '../components/shared/types';
 
-const UserProfile: React.FC = () => {
+interface Props {
+  isDarkTheme: boolean;
+  userSettings: UserSettings;
+}
+
+const UserProfile: React.FC<Props> = ({ isDarkTheme, userSettings }) => {
   const navigate = useNavigate();
   const [threads, setThreads] = useState<Thread[]>([]);
   const [userEmail, setUserEmail] = useState<string | null>(null);
@@ -23,16 +28,6 @@ const UserProfile: React.FC = () => {
           ...doc.data(),
         })) as Thread[];
 
-        // Compute historyData inside useEffect
-        const historyData: HistoryItem[] = [];
-        threadList.forEach(thread => {
-          if (thread.history) {
-            thread.history.forEach((item: HistoryItem) => {
-              historyData.push(item);
-            });
-          }
-        });
-
         setThreads(threadList);
       } else {
         navigate('/login-signup');
@@ -40,7 +35,7 @@ const UserProfile: React.FC = () => {
     };
 
     fetchUserData();
-  }, [navigate]); // Only navigate is a dependency
+  }, [navigate]);
 
   const handleSignOut = async () => {
     await auth.signOut();
@@ -48,23 +43,47 @@ const UserProfile: React.FC = () => {
   };
 
   return (
-    <Box sx={{ padding: 4 }}>
-      <Typography variant="h4">User Profile</Typography>
+    <Box
+      sx={{
+        padding: 4,
+        backgroundColor: isDarkTheme ? 'background.default' : 'background.paper',
+        color: isDarkTheme ? 'text.primary' : 'text.secondary',
+        minHeight: '100vh',
+      }}
+    >
+      <Typography variant="h4" sx={{ marginBottom: 2 }}>
+        User Profile
+      </Typography>
       {userEmail ? (
         <>
-          <Typography variant="body1">Email: {userEmail}</Typography>
-          <Button variant="contained" color="secondary" onClick={handleSignOut} sx={{ marginTop: 2 }}>
+          <Typography variant="body1" sx={{ marginBottom: 2 }}>
+            <strong>Email:</strong> {userEmail}
+          </Typography>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={handleSignOut}
+            sx={{
+              marginBottom: 4,
+              backgroundColor: isDarkTheme ? 'secondary.dark' : 'secondary.light',
+              '&:hover': {
+                backgroundColor: isDarkTheme ? 'secondary.main' : 'secondary.dark',
+              },
+            }}
+          >
             Sign Out
           </Button>
-          <Typography variant="h5" sx={{ marginTop: 4 }}>
+          <Typography variant="h5" sx={{ marginBottom: 2 }}>
             Your Threads
           </Typography>
           {threads.length === 0 ? (
-            <Typography variant="body1">No threads available.</Typography>
+            <Typography variant="body1" sx={{ color: isDarkTheme ? 'text.secondary' : 'text.primary' }}>
+              No threads available.
+            </Typography>
           ) : (
             <List>
               {threads.map(thread => (
-                <ListItem key={thread.id}>
+                <ListItem key={thread.id} sx={{ marginBottom: 1, borderRadius: 1, backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }}>
                   <ListItemText
                     primary={`Thread ${thread.id.slice(0, 8)}`}
                     secondary={`Last updated: ${
@@ -72,6 +91,9 @@ const UserProfile: React.FC = () => {
                         ? new Date(thread.updatedAt.toDate()).toLocaleString()
                         : 'Unknown Date'
                     }`}
+                    sx={{
+                      color: isDarkTheme ? 'text.primary' : 'text.secondary',
+                    }}
                   />
                 </ListItem>
               ))}
@@ -79,7 +101,9 @@ const UserProfile: React.FC = () => {
           )}
         </>
       ) : (
-        <Typography variant="body1">Loading...</Typography>
+        <Typography variant="body1" sx={{ color: isDarkTheme ? 'text.secondary' : 'text.primary' }}>
+          Loading...
+        </Typography>
       )}
     </Box>
   );
