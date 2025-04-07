@@ -29,7 +29,7 @@ const CloudSVG = ({ isDarkTheme }) => (
     width="25"
     height="25"
     viewBox="0 0 24 24"
-    marginTop="-5px"
+    style={{ marginTop: '-5px' }}
     fill={isDarkTheme ? "#9c27b0" : "#000000"}
   >
     <path d="M20 17.58A4.5 4.5 0 0 0 20 15a4.5 4.5 0 0 0-4.5-4.5A4.5 4.5 0 0 0 12 6a4.5 4.5 0 0 0-4.5 4.5A4.5 4.5 0 0 0 3 15a4.5 4.5 0 0 0 0 9h17a4.5 4.5 0 0 0 0-9z" />
@@ -59,7 +59,7 @@ const LanguageModelUI = ({ onThemeToggle, isDarkTheme }) => {
       setResponse('');
       setHistory([...history, { query: input, response: 'Your nimbus agent is asking the Thunderhead...', date: new Date() }]);
       setInput('');
-      setShowWelcome(false); // Hide welcome message when a response is generated
+      setShowWelcome(false);
 
       const aiResponse = await fetchAIResponse(input);
       setResponse(aiResponse);
@@ -73,13 +73,33 @@ const LanguageModelUI = ({ onThemeToggle, isDarkTheme }) => {
     } else {
       setHistory([...history, { query: input, response: '', date: new Date() }]);
       setInput('');
-      setShowWelcome(false); // Hide welcome message when a response is generated
+      setShowWelcome(false);
     }
   };
 
-  const fetchAIResponse = async () => {
-    // Simulate an API call
-    return `Nimbus`;
+  const fetchAIResponse = async (input) => {
+    try {
+      const response = await fetch('https://nimbus-ai-backend.herokuapp.com/api/nimbus', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: input,
+          context: '' // No specific context for LUI
+        }),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+  
+      const data = await response.json();
+      return data.response;
+    } catch (error) {
+      console.error('Error fetching AI response:', error);
+      return 'Nimbus.ai: Sorry, I encountered an error. Please try again later.';
+    }
   };
 
   const handleMenuClick = (event) => {
