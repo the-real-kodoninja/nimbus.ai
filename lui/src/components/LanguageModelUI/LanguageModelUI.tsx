@@ -4,7 +4,7 @@ import { Box } from '@mui/material';
 import axios from 'axios';
 import axiosRateLimit from 'axios-rate-limit';
 import DOMPurify from 'dompurify';
-import { doc, setDoc, collection, getDocs, addDoc, Timestamp } from 'firebase/firestore';
+import { doc, setDoc, collection, getDocs, addDoc, Timestamp, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
 import AppHeader from './AppHeader';
 import ThreadSidebar from './ThreadSidebar';
@@ -40,12 +40,32 @@ const LanguageModelUI: React.FC<Props> = ({ onThemeToggle, isDarkTheme, userSett
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [collapsedBlocks, setCollapsedBlocks] = useState<Record<number, boolean>>({});
   const [codeSnippets, setCodeSnippets] = useState<{ code: string; language: string; name: string }[]>([]);
+  const [guestId, setGuestId] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  // Fetch IP address to use as guest ID
+  useEffect(() => {
+    const fetchIp = async () => {
+      try {
+        const response = await axios.get('https://api.ipify.org?format=json');
+        setGuestId(response.data.ip.replace(/\./g, '_')); // Replace dots with underscores for Firestore ID
+      } catch (error) {
+        console.error('Error fetching IP:', error);
+        setGuestId('unknown_guest_' + Math.random().toString(36).substring(2)); // Fallback ID
+      }
+    };
+
+    fetchIp();
+  }, []);
+
+  // Fetch threads based on user or guest
   useEffect(() => {
     const fetchThreads = async () => {
-      if (auth.currentUser) {
-        const threadsRef = collection(db, 'users', auth.currentUser.uid, 'threads');
+      const userId = auth.currentUser?.uid || guestId;
+      const collectionPath = auth.currentUser ? `users/${userId}/threads` : `ghostUsers/${userId}/threads`;
+
+      if (userId) {
+        const threadsRef = collection(db, collectionPath);
         const threadSnapshot = await getDocs(threadsRef);
         const threadList = threadSnapshot.docs.map(doc => ({
           id: doc.id,
@@ -59,22 +79,57 @@ const LanguageModelUI: React.FC<Props> = ({ onThemeToggle, isDarkTheme, userSett
         }
       }
     };
-    fetchThreads();
-  }, []);
 
+    if (guestId) {
+      fetchThreads();
+    }
+  }, [guestId]);
+
+  // Save thread to Firestore
   useEffect(() => {
     const saveThread = async () => {
-      if (auth.currentUser && currentThread) {
-        const threadRef = doc(db, 'users', auth.currentUser.uid, 'threads', currentThread);
+      const userId = auth.currentUser?.uid || guestId;
+      const collectionPath = auth.currentUser ? `users/${userId}/threads` : `ghostUsers/${userId}/threads`;
+
+      if (userId && currentThread) {
+        const threadRef = doc(db, collectionPath, currentThread);
         await setDoc(threadRef, { history, updatedAt: Timestamp.now() }, { merge: true });
       }
     };
-    saveThread();
-  }, [history, currentThread]);
+
+    if (guestId) {
+      saveThread();
+    }
+  }, [history, currentThread, guestId]);
+
+  // Merge ghost data into user account upon signup
+  useEffect(() => {
+    const mergeGhostData = async () => {
+      if (auth.currentUser && guestId) {
+        const ghostThreadsRef = collection(db, `ghostUsers/${guestId}/threads`);
+        const ghostThreadsSnapshot = await getDocs(ghostThreadsRef);
+
+        const userThreadsRef = collection(db, `users/${auth.currentUser.uid}/threads`);
+        ghostThreadsSnapshot.forEach(async (doc) => {
+          const ghostThreadData = doc.data();
+          await setDoc(doc(userThreadsRef, doc.id), ghostThreadData);
+        });
+
+        // Delete ghost data after merging
+        const ghostUserRef = doc(db, `ghostUsers/${guestId}`);
+        await updateDoc(ghostUserRef, { merged: true });
+      }
+    };
+
+    mergeGhostData();
+  }, [guestId]);
 
   const createNewThread = async () => {
-    if (auth.currentUser) {
-      const threadsRef = collection(db, 'users', auth.currentUser.uid, 'threads');
+    const userId = auth.currentUser?.uid || guestId;
+    const collectionPath = auth.currentUser ? `users/${userId}/threads` : `ghostUsers/${userId}/threads`;
+
+    if (userId) {
+      const threadsRef = collection(db, collectionPath);
       const newThread = {
         history: [],
         createdAt: Timestamp.now(),
@@ -96,8 +151,11 @@ const LanguageModelUI: React.FC<Props> = ({ onThemeToggle, isDarkTheme, userSett
   };
 
   const getCrossThreadContext = async (): Promise<string> => {
-    if (auth.currentUser) {
-      const threadsRef = collection(db, 'users', auth.currentUser.uid, 'threads');
+    const userId = auth.currentUser?.uid || guestId;
+    const collectionPath = auth.currentUser ? `users/${userId}/threads` : `ghostUsers/${userId}/threads`;
+
+    if (userId) {
+      const threadsRef = collection(db, collectionPath);
       const threadSnapshot = await getDocs(threadsRef);
       let context = '';
       threadSnapshot.forEach(doc => {
@@ -181,9 +239,9 @@ const LanguageModelUI: React.FC<Props> = ({ onThemeToggle, isDarkTheme, userSett
     let messageToSend = sanitizedInput;
     let fileDataToSend = fileContents.map((f) => ({ name: f.name, type: f.type, content: f.content }));
 
-    const repoMatch = messageToSend.match(/(https?:(\/\/)(github|gitlab)\.com\/[\w-]+\/[\w-]+\/?)/);
+    const repoMatch = messageToSend.match(/(https?:\/\/(github|gitlab)\.com\/[\w-]+\/[\w-]+\/?)/);
     if (repoMatch) {
-      const repoUrl = repoMatch[0];
+      const repoUrl = repoMatch[0]; // Extract the matched URL
       try {
         const repoContent = await fetchRepoContent(repoUrl);
         messageToSend += `\n\n**Repository Content**:\n${repoContent}`;

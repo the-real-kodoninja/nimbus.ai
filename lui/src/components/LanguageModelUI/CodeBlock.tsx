@@ -52,6 +52,7 @@ const CodeBlock: React.FC<Props> = ({ code, language, index, collapsedBlocks, on
     try {
       let parser: 'babel' | 'html' | 'css' | undefined;
 
+      // Determine the parser based on the language
       if (language === 'javascript' || language === 'jsx') {
         parser = 'babel';
       } else if (language === 'html') {
@@ -63,15 +64,17 @@ const CodeBlock: React.FC<Props> = ({ code, language, index, collapsedBlocks, on
         return;
       }
 
+      // Format the code using Prettier
       const formatted = prettier.format(code, {
         parser,
-        plugins: [parserBabel, parserHtml, parserCss] as prettier.Plugin[],
+        plugins: [parserBabel, parserHtml, parserCss] as any[], // Use any[] to bypass type issue
         tabWidth: 2,
         useTabs: false,
         semi: true,
         singleQuote: true,
       });
 
+      // Update the formatted code state
       setFormattedCode(formatted);
     } catch (error) {
       console.error('Error formatting code:', error);

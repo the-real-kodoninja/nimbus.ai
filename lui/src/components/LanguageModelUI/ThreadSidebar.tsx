@@ -1,6 +1,6 @@
 import React from 'react';
-import { Box, Button, List, ListItem, ListItemText } from '@mui/material';
-import { Thread } from '../shared/types';
+import { Box, Button, List, ListItemButton, ListItemText } from '@mui/material';
+import { Thread, HistoryItem } from '../shared/types'; // Import Thread and HistoryItem
 import { Timestamp } from 'firebase/firestore';
 
 interface Props {
@@ -8,13 +8,6 @@ interface Props {
   currentThread: string | null;
   onCreateNewThread: () => void;
   onSelectThread: (threadId: string) => void;
-}
-
-export interface Thread {
-  id: string;
-  history: HistoryItem[];
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
 }
 
 const ThreadSidebar: React.FC<Props> = ({ threads, currentThread, onCreateNewThread, onSelectThread }) => {
@@ -25,9 +18,8 @@ const ThreadSidebar: React.FC<Props> = ({ threads, currentThread, onCreateNewThr
       </Button>
       <List>
         {threads.map((thread) => (
-          <ListItem
+          <ListItemButton
             key={thread.id}
-            component="button"
             selected={currentThread === thread.id}
             onClick={() => onSelectThread(thread.id)}
             sx={{
@@ -48,7 +40,7 @@ const ThreadSidebar: React.FC<Props> = ({ threads, currentThread, onCreateNewThr
                   : 'Unknown Date'
               }
             />
-          </ListItem>
+          </ListItemButton>
         ))}
       </List>
     </Box>

@@ -16,7 +16,7 @@ import {
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import UploadIcon from '@mui/icons-material/Upload';
 import ThunderstormIcon from '@mui/icons-material/Thunderstorm';
-import { UserSettings, FileContent } from '../shared/types';
+import { UserSettings } from '../shared/types';
 
 interface Props {
   input: string;

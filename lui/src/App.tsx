@@ -17,13 +17,12 @@ interface UserSettings {
 
 const App: React.FC = () => {
   const [isDarkTheme, setIsDarkTheme] = useState<boolean>(true);
-  const [history, setHistory] = useState<any[]>([]);
   const [userSettings, setUserSettings] = useState<UserSettings>({ aiName: 'Nimbus.ai', voice: 'default' });
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setIsLoggedIn(!!user);
+      setIsAuthenticated(!!user);
     });
     return () => unsubscribe();
   }, []);
@@ -58,7 +57,9 @@ const App: React.FC = () => {
           <Route
             path="/"
             element={
-              isLoggedIn ? (
+              isAuthenticated === null ? (
+                <div>Loading...</div>
+              ) : isAuthenticated ? (
                 <LanguageModelUI
                   onThemeToggle={handleThemeToggle}
                   isDarkTheme={isDarkTheme}
@@ -66,7 +67,7 @@ const App: React.FC = () => {
                   setUserSettings={setUserSettings}
                 />
               ) : (
-                <LoginSignup setIsLoggedIn={setIsLoggedIn} />
+                <LoginSignup setIsLoggedIn={(status) => setIsAuthenticated(status)} />
               )
             }
           />
@@ -75,15 +76,18 @@ const App: React.FC = () => {
             element={
               <HistoryLog
                 isDarkTheme={isDarkTheme}
-                history={history}
-                setHistory={setHistory}
                 userSettings={userSettings}
               />
             }
           />
           <Route
             path="/user-profile"
-            element={<UserProfile isDarkTheme={isDarkTheme} userSettings={userSettings} />}
+            element={
+              <UserProfile
+                isDarkTheme={isDarkTheme}
+                userSettings={userSettings}
+              />
+            }
           />
           <Route
             path="/settings"
@@ -97,7 +101,7 @@ const App: React.FC = () => {
           />
           <Route
             path="/login-signup"
-            element={<LoginSignup setIsLoggedIn={setIsLoggedIn} />}
+            element={<LoginSignup setIsLoggedIn={(status) => setIsAuthenticated(status)} />}
           />
         </Routes>
       </Router>
