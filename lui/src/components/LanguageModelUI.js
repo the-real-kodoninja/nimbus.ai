@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -15,6 +15,12 @@ import {
   FormControl,
   InputLabel,
   Select,
+  Chip,
+  Dialog,
+  DialogContent,
+  CircularProgress,
+  Fade,
+  Button,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
@@ -26,6 +32,8 @@ import Brightness7Icon from '@mui/icons-material/Brightness7';
 import SettingsIcon from '@mui/icons-material/Settings';
 import HistoryIcon from '@mui/icons-material/History';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import ShareIcon from '@mui/icons-material/Share';
+import DeleteIcon from '@mui/icons-material/Delete';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -53,43 +61,75 @@ const LanguageModelUI = ({ onThemeToggle, isDarkTheme }) => {
   const [isThunderActive, setIsThunderActive] = useState(false);
   const [isThunderClicked, setIsThunderClicked] = useState(false);
   const [isInputEmpty, setIsInputEmpty] = useState(false);
-  const [fileContent, setFileContent] = useState('');
+  const [files, setFiles] = useState([]);
+  const [selectedFile, setSelectedFile] = useState(null);
   const [selectedModel, setSelectedModel] = useState('google/flan-t5-small');
+  const [isTyping, setIsTyping] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = async () => {
-    if (!input.trim() && !fileContent) {
+    if (!input.trim() && files.length === 0) {
       setIsInputEmpty(true);
       setTimeout(() => setIsInputEmpty(false), 1000);
       return;
     }
 
-    const messageToSend = fileContent ? `${input}\n\nFile Content:\n${fileContent}` : input;
+    const fileContents = await Promise.all(
+      files.map(async (file) => {
+        const content = await readFileContent(file);
+        return { name: file.name, type: file.type, content };
+      })
+    );
+
+    const messageToSend = input + (fileContents.length > 0 ? `\n\n**Uploaded Files**:\n${fileContents.map(f => `- ${f.name} (${f.type})`).join('\n')}` : '');
+    const fileDataToSend = fileContents.map(f => ({ name: f.name, type: f.type, content: f.content }));
+
     setInput('');
-    setFileContent('');
+    setFiles([]);
     setShowWelcome(false);
+    setErrorMessage('');
 
     if (isThunderClicked) {
       setIsThunderActive(true);
       setResponse('');
-      setHistory([...history, { query: messageToSend, response: 'Nimbus.ai is asking the Thunderhead...', date: new Date() }]);
+      setHistory([...history, { query: messageToSend, files: fileDataToSend, response: 'Nimbus.ai is asking the Thunderhead...', date: new Date() }]);
     } else {
-      setHistory([...history, { query: messageToSend, response: '', date: new Date() }]);
+      setHistory([...history, { query: messageToSend, files: fileDataToSend, response: '', date: new Date() }]);
     }
 
-    const aiResponse = await fetchAIResponse(messageToSend);
-    setResponse(aiResponse);
-    setHistory((prevHistory) => {
-      const updatedHistory = [...prevHistory];
-      updatedHistory[updatedHistory.length - 1].response = aiResponse;
-      return updatedHistory;
-    });
+    setIsTyping(true);
+    const aiResponse = await fetchAIResponse(messageToSend, fileDataToSend);
+    setIsTyping(false);
+
+    if (aiResponse.includes('I encountered an error')) {
+      setErrorMessage(aiResponse);
+    } else {
+      setResponse(aiResponse);
+      setHistory((prevHistory) => {
+        const updatedHistory = [...prevHistory];
+        updatedHistory[updatedHistory.length - 1].response = aiResponse;
+        return updatedHistory;
+      });
+    }
 
     setIsThunderActive(false);
     setIsThunderClicked(false);
   };
 
-  const fetchAIResponse = async (input) => {
+  const readFileContent = (file) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      if (file.type.startsWith('image/')) {
+        reader.readAsDataURL(file);
+      } else {
+        reader.readAsText(file);
+      }
+      reader.onload = (e) => resolve(e.target.result);
+    });
+  };
+
+  const fetchAIResponse = async (input, fileData) => {
     try {
       const response = await fetch('https://nimbus-ai-backend.vercel.app/api/nimbus', {
         method: 'POST',
@@ -100,13 +140,14 @@ const LanguageModelUI = ({ onThemeToggle, isDarkTheme }) => {
           message: input,
           context: '',
           model: selectedModel,
+          files: fileData,
         }),
       });
-  
+
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
-  
+
       const data = await response.json();
       return data.response;
     } catch (error) {
@@ -138,18 +179,22 @@ const LanguageModelUI = ({ onThemeToggle, isDarkTheme }) => {
   };
 
   const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setFileContent(e.target.result);
-      };
-      reader.readAsText(file);
-    }
+    const newFiles = Array.from(event.target.files);
+    setFiles((prevFiles) => [...prevFiles, ...newFiles]);
   };
 
-  const handleModelChange = (event) => {
-    setSelectedModel(event.target.value);
+  const handleRemoveFile = (fileToRemove) => {
+    setFiles((prevFiles) => prevFiles.filter((file) => file !== fileToRemove));
+  };
+
+  const handleViewFile = (file) => {
+    readFileContent(file).then((content) => {
+      setSelectedFile({ name: file.name, type: file.type, content });
+    });
+  };
+
+  const handleCloseDialog = () => {
+    setSelectedFile(null);
   };
 
   const handleCopyCode = (code) => {
@@ -157,11 +202,37 @@ const LanguageModelUI = ({ onThemeToggle, isDarkTheme }) => {
     alert('Code copied to clipboard!');
   };
 
+  const handleModelChange = (event) => {
+    setSelectedModel(event.target.value);
+  };
+
+  const handleClearChat = () => {
+    setHistory([]);
+    setShowWelcome(true);
+    handleMenuClose();
+  };
+
+  const handleShareResponse = (response) => {
+    const shareUrl = `${window.location.origin}/share?response=${encodeURIComponent(response)}`;
+    navigator.clipboard.writeText(shareUrl);
+    alert('Share link copied to clipboard!');
+  };
+
+  const formatDate = (date) => {
+    return date.toLocaleString('en-US', {
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true,
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
   const wordCount = input.split(/\s+/).filter((word) => word.length > 0).length;
 
   return (
-    <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <AppBar position="static" sx={{ backgroundColor: 'background.paper' }}>
+    <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh', display: 'flex', flexDirection: 'column', padding: { xs: 1, sm: 2, md: 4 } }}>
+      <AppBar position="static" sx={{ backgroundColor: 'background.paper', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
         <Toolbar>
           <IconButton edge="start" color="inherit" onClick={handleMenuClick} sx={{ color: isDarkTheme ? 'inherit' : 'text.primary' }}>
             <MenuIcon />
@@ -176,99 +247,172 @@ const LanguageModelUI = ({ onThemeToggle, isDarkTheme }) => {
         </Toolbar>
       </AppBar>
 
-      <Box sx={{ flexGrow: 1, padding: 4, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center', marginTop: -4, marginBottom: -3 }}>
+      <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center', marginTop: -2, marginBottom: -2 }}>
         <Paper
-          elevation={0}  // Remove elevation to remove shadow
+          elevation={0}
           sx={{
             flexGrow: 1,
             width: '100%',
-            maxWidth: 636,
+            maxWidth: { xs: '100%', sm: 636 },
             marginTop: 2,
             padding: 2,
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'flex-start',
-            backgroundColor: 'transparent',  // Make background transparent
+            backgroundColor: 'transparent',
+            borderRadius: 2,
           }}
         >
-          <Box sx={{ overflowY: 'auto', flexGrow: 1, maxHeight: '60vh' }}>  {/* Ensure scrolling for long content */}
+          <Box sx={{ overflowY: 'auto', flexGrow: 1, maxHeight: '60vh', paddingRight: 1 }}>
             {showWelcome ? (
-              <Typography variant="body1" align="center" sx={{ color: isDarkTheme ? 'text.secondary' : 'text.primary', marginTop: 2 }}>
-                Welcome to Nimbus.ai an agent of the Thunderhead! Ask me anything.
-              </Typography>
+              <Fade in={showWelcome}>
+                <Typography variant="body1" align="center" sx={{ color: isDarkTheme ? 'text.secondary' : 'text.primary', marginTop: 2 }}>
+                  Welcome to Nimbus.ai, an agent of the Thunderhead! Ask me anything.
+                </Typography>
+              </Fade>
             ) : (
-              history.map((item, index) => (
-                <Box key={index} sx={{ display: 'flex', flexDirection: 'column', marginBottom: 2 }}>
-                  {item.query && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: 1, width: '100%' }}>
-                      <Avatar sx={{ marginRight: 1 }} />
-                      <Box
-                        sx={{
-                          backgroundColor: 'primary.light',
-                          padding: 1,
-                          borderRadius: 1,
-                          color: 'text.primary',
-                          width: '100%',  // Full width for sent messages
-                          overflowWrap: 'break-word',
-                        }}
-                      >
-                        <Typography variant="body2">{item.query}</Typography>
-                      </Box>
+              <>
+                {history.map((item, index) => (
+                  <Fade in key={index}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', marginBottom: 3 }}>
+                      {item.query && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: 1, width: '100%' }}>
+                          <Avatar sx={{ marginRight: 1 }} />
+                          <Box
+                            sx={{
+                              backgroundColor: 'primary.light',
+                              padding: 2,
+                              borderRadius: 2,
+                              color: 'text.primary',
+                              width: '100%',
+                              overflowWrap: 'break-word',
+                              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                            }}
+                          >
+                            <Typography variant="body2">{item.query}</Typography>
+                            {item.files && item.files.length > 0 && (
+                              <Box sx={{ marginTop: 1 }}>
+                                {item.files.map((file, idx) => (
+                                  <Chip
+                                    key={idx}
+                                    label={file.name}
+                                    onClick={() => setSelectedFile(file)}
+                                    sx={{ margin: 0.5 }}
+                                  />
+                                ))}
+                              </Box>
+                            )}
+                            <Typography variant="caption" sx={{ color: 'text.secondary', marginTop: 1, display: 'block' }}>
+                              {formatDate(item.date)}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      )}
+                      {item.response && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                          <Box
+                            sx={{
+                              padding: 2,
+                              borderRadius: 2,
+                              color: 'text.secondary',
+                              width: '100%',
+                              overflowWrap: 'break-word',
+                              backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                            }}
+                          >
+                            <ReactMarkdown
+                              remarkPlugins={[remarkGfm]}
+                              components={{
+                                code({ node, inline, className, children, ...props }) {
+                                  const match = /language-(\w+)/.exec(className || '');
+                                  return !inline && match ? (
+                                    <Box sx={{ position: 'relative' }}>
+                                      <SyntaxHighlighter
+                                        style={dark}
+                                        language={match[1]}
+                                        PreTag="div"
+                                        {...props}
+                                      >
+                                        {String(children).replace(/\n$/, '')}
+                                      </SyntaxHighlighter>
+                                      <IconButton
+                                        sx={{ position: 'absolute', top: 8, right: 8 }}
+                                        onClick={() => handleCopyCode(String(children))}
+                                      >
+                                        <ContentCopyIcon fontSize="small" />
+                                      </IconButton>
+                                    </Box>
+                                  ) : (
+                                    <code className={className} {...props}>
+                                      {children}
+                                    </code>
+                                  );
+                                },
+                              }}
+                            >
+                              {item.response}
+                            </ReactMarkdown>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', marginTop: 1 }}>
+                              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                {formatDate(item.date)}
+                              </Typography>
+                              <IconButton size="small" onClick={() => handleShareResponse(item.response)}>
+                                <ShareIcon fontSize="small" />
+                              </IconButton>
+                            </Box>
+                          </Box>
+                          <Avatar sx={{ marginLeft: 1 }} />
+                        </Box>
+                      )}
                     </Box>
-                  )}
-                  {item.response && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                  </Fade>
+                ))}
+                {isTyping && (
+                  <Fade in={isTyping}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', marginBottom: 3 }}>
                       <Box
                         sx={{
-                          padding: 1,
-                          borderRadius: 1,
+                          padding: 2,
+                          borderRadius: 2,
                           color: 'text.secondary',
-                          width: '100%',  // Full width for responses
-                          overflowWrap: 'break-word',
+                          width: '100%',
+                          backgroundColor: isDarkTheme ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
                         }}
                       >
-                        <ReactMarkdown
-                          remarkPlugins={[remarkGfm]}
-                          components={{
-                            code({ node, inline, className, children, ...props }) {
-                              const match = /language-(\w+)/.exec(className || '');
-                              return !inline && match ? (
-                                <Box sx={{ position: 'relative' }}>
-                                  <SyntaxHighlighter
-                                    style={dark}
-                                    language={match[1]}
-                                    PreTag="div"
-                                    {...props}
-                                  >
-                                    {String(children).replace(/\n$/, '')}
-                                  </SyntaxHighlighter>
-                                  <IconButton
-                                    sx={{ position: 'absolute', top: 8, right: 8 }}
-                                    onClick={() => handleCopyCode(String(children))}
-                                  >
-                                    <ContentCopyIcon fontSize="small" />
-                                  </IconButton>
-                                </Box>
-                              ) : (
-                                <code className={className} {...props}>
-                                  {children}
-                                </code>
-                              );
-                            },
-                          }}
-                        >
-                          {item.response}
-                        </ReactMarkdown>
+                        <Typography variant="body2">
+                          Nimbus.ai is typing... <CircularProgress size={16} sx={{ marginLeft: 1 }} />
+                        </Typography>
                       </Box>
                       <Avatar sx={{ marginLeft: 1 }} />
                     </Box>
-                  )}
-                </Box>
-              ))
+                  </Fade>
+                )}
+                {errorMessage && (
+                  <Fade in={!!errorMessage}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', marginBottom: 3 }}>
+                      <Box
+                        sx={{
+                          padding: 2,
+                          borderRadius: 2,
+                          color: 'error.main',
+                          width: '100%',
+                          backgroundColor: isDarkTheme ? 'rgba(255,0,0,0.1)' : 'rgba(255,0,0,0.05)',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                        }}
+                      >
+                        <Typography variant="body2">{errorMessage}</Typography>
+                      </Box>
+                      <Avatar sx={{ marginLeft: 1 }} />
+                    </Box>
+                  </Fade>
+                )}
+              </>
             )}
           </Box>
         </Paper>
-        <Box sx={{ width: '100%', maxWidth: 632, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginTop: 2.5, paddingBottom: 0, marginBottom: 0 }}>
+        <Box sx={{ width: '100%', maxWidth: { xs: '100%', sm: 632 }, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginTop: 2.5, paddingBottom: 0, marginBottom: 0 }}>
           <Box sx={{ display: 'flex', alignItems: 'flex-end', width: '100%' }}>
             <TextField
               label="Hey, Nimbus!..."
@@ -281,6 +425,7 @@ const LanguageModelUI = ({ onThemeToggle, isDarkTheme }) => {
               onChange={(e) => setInput(e.target.value)}
               sx={{
                 backgroundColor: 'background.paper',
+                borderRadius: 2,
                 '& .MuiOutlinedInput-root': {
                   '& fieldset': {
                     borderColor: isInputEmpty ? 'red' : 'primary.main',
@@ -307,14 +452,28 @@ const LanguageModelUI = ({ onThemeToggle, isDarkTheme }) => {
                 '&:hover': {
                   background: 'linear-gradient(45deg, #9c27b0 30%, #6a1b9a 90%)',
                 },
+                boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
               }}
             >
               <ArrowForwardIcon />
             </IconButton>
           </Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', marginTop: 1, width: '100%' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <FormControl sx={{ minWidth: 150, marginRight: 2 }}>
+          {files.length > 0 && (
+            <Box sx={{ marginTop: 1, display: 'flex', flexWrap: 'wrap' }}>
+              {files.map((file, index) => (
+                <Chip
+                  key={index}
+                  label={file.name}
+                  onDelete={() => handleRemoveFile(file)}
+                  onClick={() => handleViewFile(file)}
+                  sx={{ margin: 0.5, backgroundColor: 'primary.light', color: 'text.primary' }}
+                />
+              ))}
+            </Box>
+          )}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', marginTop: 1, width: '100%', flexWrap: 'wrap', gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+              <FormControl sx={{ minWidth: 150 }}>
                 <InputLabel id="model-select-label">Model</InputLabel>
                 <Select
                   labelId="model-select-label"
@@ -333,22 +492,25 @@ const LanguageModelUI = ({ onThemeToggle, isDarkTheme }) => {
                 Word Count: {wordCount}
               </Typography>
             </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
               <input
-                accept=".txt"
+                accept="*/*"
                 style={{ display: 'none' }}
                 id="upload-file"
                 type="file"
+                multiple
                 onChange={handleFileUpload}
               />
               <label htmlFor="upload-file">
-                <IconButton color="primary" component="span">
-                  <UploadIcon />
-                </IconButton>
+                <Button
+                  variant="outlined"
+                  startIcon={<UploadIcon />}
+                  component="span"
+                  sx={{ borderRadius: 2, textTransform: 'none' }}
+                >
+                  Upload
+                </Button>
               </label>
-              <Typography variant="body2" sx={{ color: isDarkTheme ? 'text.secondary' : 'text.primary', marginLeft: 0.5 }}>
-                Upload
-              </Typography>
               <Tooltip title="Your nimbus agent will ask the Thunderhead">
                 <IconButton
                   color="primary"
@@ -358,6 +520,7 @@ const LanguageModelUI = ({ onThemeToggle, isDarkTheme }) => {
                     animation: isThunderActive ? 'thunder 1s infinite' : 'none',
                     border: isThunderClicked ? '2px solid' : 'none',
                     borderColor: 'primary.main',
+                    borderRadius: 2,
                   }}
                 >
                   <ThunderstormIcon />
@@ -370,6 +533,22 @@ const LanguageModelUI = ({ onThemeToggle, isDarkTheme }) => {
           </Box>
         </Box>
       </Box>
+
+      <Dialog open={!!selectedFile} onClose={handleCloseDialog} maxWidth="md" fullWidth>
+        <DialogContent>
+          {selectedFile && (
+            <>
+              {selectedFile.type.startsWith('image/') ? (
+                <img src={selectedFile.content} alt={selectedFile.name} style={{ maxWidth: '100%', maxHeight: '80vh' }} />
+              ) : selectedFile.type === 'application/pdf' ? (
+                <iframe src={selectedFile.content} title={selectedFile.name} style={{ width: '100%', height: '80vh' }} />
+              ) : (
+                <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>{selectedFile.content}</Typography>
+              )}
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Menu
         anchorEl={anchorEl}
@@ -393,6 +572,12 @@ const LanguageModelUI = ({ onThemeToggle, isDarkTheme }) => {
             <HistoryIcon />
           </IconButton>
           History Log
+        </MenuItem>
+        <MenuItem onClick={handleClearChat}>
+          <IconButton color="inherit">
+            <DeleteIcon />
+          </IconButton>
+          Clear Chat
         </MenuItem>
       </Menu>
     </Box>
