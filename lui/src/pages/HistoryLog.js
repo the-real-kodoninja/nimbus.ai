@@ -15,13 +15,14 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 
-const HistoryLog = ({ isDarkTheme }) => {
+const HistoryLog = ({ isDarkTheme, history, setHistory }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const history = location.state?.history || [];
+  const historyData = location.state?.history || history || [];
 
   const handleDelete = (index) => {
-    // Implement delete functionality
+    const updatedHistory = historyData.filter((_, i) => i !== index);
+    setHistory(updatedHistory);
   };
 
   return (
@@ -43,7 +44,7 @@ const HistoryLog = ({ isDarkTheme }) => {
       <Box sx={{ flexGrow: 1, padding: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <Paper elevation={3} sx={{ width: '100%', maxWidth: 600, padding: 2 }}>
           <List>
-            {history.map((item, index) => (
+            {historyData.map((item, index) => (
               <ListItem key={index} sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <ListItemText
                   primary={`Query: ${item.query}`}

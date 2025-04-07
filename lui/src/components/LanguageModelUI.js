@@ -45,10 +45,11 @@ const LanguageModelUI = ({ onThemeToggle, isDarkTheme }) => {
   const [isThunderActive, setIsThunderActive] = useState(false);
   const [isThunderClicked, setIsThunderClicked] = useState(false);
   const [isInputEmpty, setIsInputEmpty] = useState(false);
+  const [fileContent, setFileContent] = useState(''); // New state for file content
   const navigate = useNavigate();
 
   const handleSubmit = async () => {
-    if (!input.trim()) {
+    if (!input.trim() && !fileContent) {
       setIsInputEmpty(true);
       setTimeout(() => setIsInputEmpty(false), 1000);
       return;
@@ -57,11 +58,13 @@ const LanguageModelUI = ({ onThemeToggle, isDarkTheme }) => {
     if (isThunderClicked) {
       setIsThunderActive(true);
       setResponse('');
-      setHistory([...history, { query: input, response: 'Your nimbus agent is asking the Thunderhead...', date: new Date() }]);
+      const messageToSend = fileContent ? `${input}\n\nFile Content:\n${fileContent}` : input;
+      setHistory([...history, { query: messageToSend, response: 'Your nimbus agent is asking the Thunderhead...', date: new Date() }]);
       setInput('');
+      setFileContent(''); // Clear file content after submission
       setShowWelcome(false);
 
-      const aiResponse = await fetchAIResponse(input);
+      const aiResponse = await fetchAIResponse(messageToSend);
       setResponse(aiResponse);
       setHistory((prevHistory) => {
         const updatedHistory = [...prevHistory];
@@ -71,15 +74,17 @@ const LanguageModelUI = ({ onThemeToggle, isDarkTheme }) => {
       setIsThunderActive(false);
       setIsThunderClicked(false);
     } else {
-      setHistory([...history, { query: input, response: '', date: new Date() }]);
+      const messageToSend = fileContent ? `${input}\n\nFile Content:\n${fileContent}` : input;
+      setHistory([...history, { query: messageToSend, response: '', date: new Date() }]);
       setInput('');
+      setFileContent('');
       setShowWelcome(false);
     }
   };
 
   const fetchAIResponse = async (input) => {
     try {
-      const response = await fetch('https://nimbus-ai-backend.herokuapp.com/api/nimbus', {
+      const response = await fetch('http://localhost:8001/api/nimbus', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -89,11 +94,11 @@ const LanguageModelUI = ({ onThemeToggle, isDarkTheme }) => {
           context: '' // No specific context for LUI
         }),
       });
-  
+
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
-  
+
       const data = await response.json();
       return data.response;
     } catch (error) {
@@ -111,7 +116,7 @@ const LanguageModelUI = ({ onThemeToggle, isDarkTheme }) => {
   };
 
   const handleHistoryLogClick = () => {
-    navigate('/history-log', { state: { history } });
+    navigate('/history-log', { state: { history, setHistory } });
     handleMenuClose();
   };
 
@@ -122,6 +127,17 @@ const LanguageModelUI = ({ onThemeToggle, isDarkTheme }) => {
 
   const handleThunderClick = () => {
     setIsThunderClicked(!isThunderClicked);
+  };
+
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setFileContent(e.target.result);
+      };
+      reader.readAsText(file); // For now, we'll assume text files
+    }
   };
 
   const wordCount = input.split(/\s+/).filter((word) => word.length > 0).length;
@@ -223,9 +239,18 @@ const LanguageModelUI = ({ onThemeToggle, isDarkTheme }) => {
               Word Count: {wordCount}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <IconButton color="primary">
-                <UploadIcon />
-              </IconButton>
+              <input
+                accept=".txt"
+                style={{ display: 'none' }}
+                id="upload-file"
+                type="file"
+                onChange={handleFileUpload}
+              />
+              <label htmlFor="upload-file">
+                <IconButton color="primary" component="span">
+                  <UploadIcon />
+                </IconButton>
+              </label>
               <Typography variant="body2" sx={{ color: isDarkTheme ? 'text.secondary' : 'text.primary', marginLeft: 0.5 }}>
                 Upload
               </Typography>
