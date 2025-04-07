@@ -13,13 +13,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Comment out OpenAI logic
-# import os
-# from openai import OpenAI
-# client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-
-# Initialize the Hugging Face pipeline with distilgpt2
-generator = pipeline("text-generation", model="distilgpt2")
+# Initialize the Hugging Face pipeline with facebook/opt-125m
+generator = pipeline("text-generation", model="facebook/opt-125m")
 
 class MessageRequest(BaseModel):
     message: str
@@ -36,7 +31,7 @@ def generate_response(message: str, context: str) -> str:
         else:
             prompt = f"You are Nimbus.ai, a helpful AI assistant for Kodoninja. A user asked: {message}. Provide a concise and relevant response."
 
-        # Generate response using distilgpt2
+        # Generate response using facebook/opt-125m
         generated = generator(prompt, max_length=100, num_return_sequences=1, truncation=True, temperature=0.7, top_p=0.9)
         return f"Nimbus.ai: {generated[0]['generated_text'].replace(prompt, '').strip()}"
     except Exception as e:
