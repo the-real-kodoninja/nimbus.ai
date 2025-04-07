@@ -232,14 +232,32 @@ const LanguageModelUI: React.FC<Props> = ({ onThemeToggle, isDarkTheme, userSett
 
   const fetchAIResponse = async (message: string, fileData: FileContent[]): Promise<string> => {
     try {
-      const response = await axios.post('https://nimbusagi.netlify.app/api/nimbus', {
-        message,
-        context: '',
-        model: selectedModel,
-        files: fileData,
-      });
+      // Retrieve the current user's ID token
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) {
+        throw new Error('User is not authenticated. Please log in.');
+      }
+
+      // Make the API request with the Bearer token
+      const response = await axios.post(
+        'https://nimbusagi.netlify.app/api/generate',
+        {
+          message,
+          context: '',
+          model: selectedModel,
+          files: fileData,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Return the response from the API
       return response.data.response;
     } catch (error: any) {
+      // Handle errors and return an error message
       return `I encountered an error while generating a response: ${error.message}`;
     }
   };
