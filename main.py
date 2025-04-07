@@ -26,42 +26,19 @@ class MessageRequest(BaseModel):
     context: str = ""
 
 def generate_response(message: str, context: str) -> str:
-    # Commented out OpenAI response generation
-    # if context == "blog":
-    #     prompt = f"Help me write a blog post. The topic is: {message}. Suggest an engaging introduction."
-    # elif context == "forum":
-    #     prompt = f"Help me create a forum post. The topic is: {message}. Suggest a discussion starter."
-    # elif context == "goal":
-    #     prompt = f"Help me set a goal. The goal is: {message}. Suggest actionable steps."
-    # else:
-    #     prompt = f"You are Nimbus.ai, a helpful AI assistant for Kodoninja. Respond to this message: {message}"
-
-    # try:
-    #     response = client.chat.completions.create(
-    #         model="gpt-3.5-turbo",
-    #         messages=[
-    #             {"role": "system", "content": "You are Nimbus.ai, a helpful AI assistant."},
-    #             {"role": "user", "content": prompt}
-    #         ]
-    #     )
-    #     return f"Nimbus.ai: {response.choices[0].message.content}"
-    # except Exception as e:
-    #     return f"Nimbus.ai: I encountered an error while generating a response: {str(e)}"
-
-    # Hugging Face distilgpt2 response generation
     try:
         if context == "blog":
-            prompt = f"Write an engaging introduction for a blog post about: {message}."
+            prompt = f"Write an engaging introduction for a blog post about: {message}. Keep it concise and relevant."
         elif context == "forum":
-            prompt = f"Create a discussion starter for a forum post on the topic: {message}."
+            prompt = f"Create a discussion starter for a forum post on the topic: {message}. Keep it concise and relevant."
         elif context == "goal":
-            prompt = f"Suggest actionable steps to achieve the goal: {message}."
+            prompt = f"Suggest actionable steps to achieve the goal: {message}. Keep it concise and relevant."
         else:
-            prompt = f"You are Nimbus.ai, a helpful AI assistant for Kodoninja. Respond to this message: {message}"
+            prompt = f"You are Nimbus.ai, a helpful AI assistant for Kodoninja. A user asked: {message}. Provide a concise and relevant response."
 
         # Generate response using distilgpt2
-        generated = generator(prompt, max_length=100, num_return_sequences=1, truncation=True)
-        return f"Nimbus.ai: {generated[0]['generated_text']}"
+        generated = generator(prompt, max_length=100, num_return_sequences=1, truncation=True, temperature=0.7, top_p=0.9)
+        return f"Nimbus.ai: {generated[0]['generated_text'].replace(prompt, '').strip()}"
     except Exception as e:
         return f"Nimbus.ai: I encountered an error while generating a response: {str(e)}"
 
