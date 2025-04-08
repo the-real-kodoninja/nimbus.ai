@@ -14,11 +14,11 @@ import { UserSettings } from './components/shared/types';
 const App: React.FC = () => {
   const [isDarkTheme, setIsDarkTheme] = useState<boolean>(true);
   const [userSettings, setUserSettings] = useState<UserSettings>({ aiName: 'Nimbus.ai', voice: 'default' });
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setIsAuthenticated(user !== null); // Set authentication state based on user presence
+      setIsLoggedIn(!!user); // Set isLoggedIn to true if a user is authenticated
     });
     return () => unsubscribe();
   }, []);
@@ -53,49 +53,61 @@ const App: React.FC = () => {
           <Route
             path="/"
             element={
-              isAuthenticated === null ? (
-                <div>Loading...</div> // Show a loading state while checking authentication
-              ) : (
+              isLoggedIn ? (
                 <LanguageModelUI
                   onThemeToggle={handleThemeToggle}
                   isDarkTheme={isDarkTheme}
                   userSettings={userSettings}
                   setUserSettings={setUserSettings}
                 />
+              ) : (
+                <LoginSignup setIsLoggedIn={setIsLoggedIn} />
               )
             }
           />
           <Route
             path="/history-log"
             element={
-              <HistoryLog
-                isDarkTheme={isDarkTheme}
-                userSettings={userSettings}
-              />
+              isLoggedIn ? (
+                <HistoryLog
+                  isDarkTheme={isDarkTheme}
+                  userSettings={userSettings}
+                />
+              ) : (
+                <LoginSignup setIsLoggedIn={setIsLoggedIn} />
+              )
             }
           />
           <Route
             path="/user-profile"
             element={
-              <UserProfile
-                isDarkTheme={isDarkTheme}
-                userSettings={userSettings}
-              />
+              isLoggedIn ? (
+                <UserProfile
+                  isDarkTheme={isDarkTheme}
+                  userSettings={userSettings}
+                />
+              ) : (
+                <LoginSignup setIsLoggedIn={setIsLoggedIn} />
+              )
             }
           />
           <Route
             path="/settings"
             element={
-              <Settings
-                isDarkTheme={isDarkTheme}
-                userSettings={userSettings}
-                setUserSettings={setUserSettings}
-              />
+              isLoggedIn ? (
+                <Settings
+                  isDarkTheme={isDarkTheme}
+                  userSettings={userSettings}
+                  setUserSettings={setUserSettings}
+                />
+              ) : (
+                <LoginSignup setIsLoggedIn={setIsLoggedIn} />
+              )
             }
           />
           <Route
             path="/login-signup"
-            element={<LoginSignup />}
+            element={<LoginSignup setIsLoggedIn={setIsLoggedIn} />}
           />
         </Routes>
       </Router>

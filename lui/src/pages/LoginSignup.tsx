@@ -11,9 +11,11 @@ import {
   Tabs,
   Tab,
   Fade,
+  IconButton,
 } from '@mui/material';
 import { styled } from '@mui/system';
 import { motion } from 'framer-motion';
+import CloseIcon from '@mui/icons-material/Close';
 
 const StyledPaper = styled(Paper)(({ theme }: { theme: any }) => ({
   background: 'linear-gradient(45deg, #6a1b9a 30%, #9c27b0 90%)',
@@ -81,24 +83,55 @@ const LoginSignup: React.FC<Props> = ({ setIsLoggedIn }) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+  const handleAuth = async () => {
     try {
-      if (tab === 0) {
-        // Login
-        await signInWithEmailAndPassword(auth, formData.email, formData.password);
+      console.log('Attempting auth:', { email: formData.email, isSignup: tab === 1 });
+      if (tab === 1) {
+        // Signup
+        const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+        const user = userCredential.user;
+        console.log('Signup successful:', user);
+
+        // Merge guest data into user account (if applicable)
+        if (guestId) {
+          const guestThreadsRef = collection(db, `ghostUsers/${guestId}/threads`);
+          const userThreadsRef = collection(db, `users/${user.uid}/threads`);
+
+          const guestThreadsSnapshot = await getDocs(guestThreadsRef);
+          for (const guestDoc of guestThreadsSnapshot.docs) {
+            const guestThreadData = guestDoc.data();
+            await setDoc(doc(userThreadsRef, guestDoc.id), guestThreadData);
+          }
+
+          // Delete guest data after merging
+          for (const guestDoc of guestThreadsSnapshot.docs) {
+            await deleteDoc(doc(guestThreadsRef, guestDoc.id));
+          }
+        }
+
         setIsLoggedIn(true);
         navigate('/');
       } else {
-        // Signup
-        await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+        // Login
+        const userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
+        console.log('Login successful:', userCredential.user);
         setIsLoggedIn(true);
         navigate('/');
       }
     } catch (err: any) {
+      console.error('Auth error:', err.message);
       setError(err.message);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    await handleAuth();
+  };
+
+  const handleClose = () => {
+    navigate('/');
   };
 
   return (
@@ -109,8 +142,12 @@ const LoginSignup: React.FC<Props> = ({ setIsLoggedIn }) => {
         justifyContent: 'center',
         alignItems: 'center',
         background: 'linear-gradient(to bottom, #121212, #1e1e1e)',
+        position: 'relative',
       }}
     >
+      <IconButton onClick={handleClose} sx={{ position: 'absolute', top: 16, right: 16, color: '#ffffff' }}>
+        <CloseIcon />
+      </IconButton>
       <Fade in>
         <StyledPaper elevation={6}>
           <Typography variant="h4" sx={{ marginBottom: 2 }}>

@@ -13,6 +13,7 @@ import InputArea from './InputArea';
 import FileViewerDialog from './FileViewerDialog';
 import MenuOptions from './MenuOptions';
 import { UserSettings, HistoryItem, Thread, FileContent } from '../shared/types';
+import MenuIcon from '@mui/icons-material/Menu';
 
 const http = axiosRateLimit(axios.create(), { maxRequests: 10, perMilliseconds: 60000 });
 
@@ -41,6 +42,7 @@ const LanguageModelUI: React.FC<Props> = ({ onThemeToggle, isDarkTheme, userSett
   const [collapsedBlocks, setCollapsedBlocks] = useState<Record<number, boolean>>({});
   const [codeSnippets, setCodeSnippets] = useState<{ code: string; language: string; name: string }[]>([]);
   const [guestId, setGuestId] = useState<string | null>(null);
+  const [isSidebarVisible, setIsSidebarVisible] = useState<boolean>(true);
   const navigate = useNavigate();
 
   // Fetch IP address to use as guest ID
@@ -222,7 +224,7 @@ const LanguageModelUI: React.FC<Props> = ({ onThemeToggle, isDarkTheme, userSett
       } else {
         const [, projectPath] = repoUrl.match(/gitlab\.com\/([\w-\/]+)/) || [];
         projectId = projectPath;
-        apiUrl = `https://gitlab.com/api/v4/projects/${encodeURIComponent(projectId)}/repository/tree`;
+        apiUrl = `https://gitlab.com/api/v4/projects/${encodeURIComponent(projectId!)}/repository/tree`;
       }
 
       const response = await http.get(apiUrl, {
@@ -269,37 +271,22 @@ const LanguageModelUI: React.FC<Props> = ({ onThemeToggle, isDarkTheme, userSett
     let messageToSend = sanitizedInput;
     let fileDataToSend = fileContents.map((f) => ({ name: f.name, type: f.type, content: f.content }));
 
-    const repoMatch = messageToSend.match(/(https?:\/\/(github|gitlab)\.com\/[\w-]+\/[\w-]+\/?)/);
-    if (repoMatch) {
-      const repoUrl = repoMatch[0]; // Extract the matched URL
-      try {
-        const repoContent = await fetchRepoContent(repoUrl);
-        messageToSend += `\n\n**Repository Content**:\n${repoContent}`;
-      } catch (error: any) {
-        messageToSend += `\n\n**Error Fetching Repository**: ${error.message}`;
-      }
-    }
-
-    const crossThreadContext = await getCrossThreadContext();
-    messageToSend = `${messageToSend}\n\n**Cross-Thread Context**:\n${crossThreadContext}`;
-
     setInput('');
     setFiles([]);
     setShowWelcome(false);
     setErrorMessage('');
 
-    if (isThunderClicked) {
-      setIsThunderActive(true);
-      setHistory([
-        ...history,
-        { query: messageToSend, files: fileDataToSend, response: `${userSettings.aiName} is asking the Thunderhead...`, date: new Date() },
-      ]);
-    } else {
-      setHistory([...history, { query: messageToSend, files: fileDataToSend, response: '', date: new Date() }]);
-    }
+    const newHistoryItem: HistoryItem = {
+      query: messageToSend,
+      files: fileDataToSend,
+      response: '',
+      date: new Date(),
+    };
+
+    setHistory([...history, newHistoryItem]);
 
     setIsTyping(true);
-    const aiResponse = await fetchAIResponse(messageToSend, fileDataToSend);
+    const aiResponse = await fetchAIResponse(messageToSend, fileDataToSend); // Mock response used here
     setIsTyping(false);
 
     if (aiResponse.includes('I encountered an error')) {
@@ -311,9 +298,6 @@ const LanguageModelUI: React.FC<Props> = ({ onThemeToggle, isDarkTheme, userSett
         return updatedHistory;
       });
     }
-
-    setIsThunderActive(false);
-    setIsThunderClicked(false);
   };
 
   const readFileContent = (file: File): Promise<string> => {
@@ -407,6 +391,10 @@ const LanguageModelUI: React.FC<Props> = ({ onThemeToggle, isDarkTheme, userSett
     setCodeSnippets([...codeSnippets, { code, language, name: `Snippet ${codeSnippets.length + 1}` }]);
   };
 
+  const toggleSidebar = () => {
+    setIsSidebarVisible((prev) => !prev);
+  };
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'row', minHeight: '100vh' }}>
       <ThreadSidebar
@@ -414,15 +402,42 @@ const LanguageModelUI: React.FC<Props> = ({ onThemeToggle, isDarkTheme, userSett
         currentThread={currentThread}
         onCreateNewThread={createNewThread}
         onSelectThread={selectThread}
+        isSidebarVisible={isSidebarVisible}
+        onToggleSidebar={toggleSidebar}
       />
       <Box sx={{ flexGrow: 1 }}>
-        <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh', display: 'flex', flexDirection: 'column', padding: { xs: 1, sm: 2, md: 4 } }}>
+        <Box
+          sx={{
+            backgroundColor: 'background.default',
+            minHeight: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            padding: { xs: 1, sm: 2, md: 4 },
+          }}
+        >
           <AppHeader
             isDarkTheme={isDarkTheme}
-            onMenuClick={handleMenuClick}
+            onMenuClick={toggleSidebar}
             onUserProfileClick={handleUserProfileClick}
           />
-          <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center', marginTop: -2, marginBottom: -2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: 2 }}>
+            {!isSidebarVisible && (
+              <IconButton onClick={toggleSidebar}>
+                <MenuIcon />
+              </IconButton>
+            )}
+          </Box>
+          <Box
+            sx={{
+              flexGrow: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginTop: -2,
+              marginBottom: -2,
+            }}
+          >
             <ChatArea
               showWelcome={showWelcome}
               isDarkTheme={isDarkTheme}

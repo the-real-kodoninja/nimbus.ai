@@ -1,18 +1,35 @@
 import React from 'react';
-import { Box, Button, List, ListItemButton, ListItemText } from '@mui/material';
-import { Thread } from '../shared/types'; // Import Thread and HistoryItem
+import { Box, Button, List, ListItemButton, ListItemText, IconButton } from '@mui/material';
+import { Thread } from '../shared/types';
 import { Timestamp } from 'firebase/firestore';
+import CloseIcon from '@mui/icons-material/Close';
 
 interface Props {
   threads: Thread[];
   currentThread: string | null;
   onCreateNewThread: () => void;
   onSelectThread: (threadId: string) => void;
+  isSidebarVisible: boolean;
+  onToggleSidebar: () => void;
 }
 
-const ThreadSidebar: React.FC<Props> = ({ threads, currentThread, onCreateNewThread, onSelectThread }) => {
+const ThreadSidebar: React.FC<Props> = ({ threads, currentThread, onCreateNewThread, onSelectThread, isSidebarVisible, onToggleSidebar }) => {
+  if (!isSidebarVisible) return null;
+
   return (
-    <Box sx={{ width: 250, padding: 2, borderRight: '1px solid rgba(255,255,255,0.1)' }}>
+    <Box
+      sx={{
+        width: 250,
+        padding: 2,
+        borderRight: '1px solid rgba(255,255,255,0.1)',
+        backgroundColor: 'background.paper',
+        height: '100vh',
+        position: 'relative',
+      }}
+    >
+      <IconButton onClick={onToggleSidebar} sx={{ position: 'absolute', top: 8, right: 8 }}>
+        <CloseIcon />
+      </IconButton>
       <Button variant="contained" onClick={onCreateNewThread} sx={{ marginBottom: 2 }}>
         New Thread
       </Button>
