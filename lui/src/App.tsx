@@ -108,6 +108,7 @@ const App: React.FC = () => {
               )
             }
           />
+          <Route path="/marketplace" element={<Marketplace />} />
           <Route
             path="/settings"
             element={

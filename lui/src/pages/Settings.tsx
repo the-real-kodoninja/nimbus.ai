@@ -62,6 +62,7 @@ const Settings: React.FC = () => {
   });
   const [newLink, setNewLink] = useState('');
   const [userSettings, setUserSettings] = useState<UserSettings>({
+    agents: [],
     aiName: 'Nimbus',
     voice: 'default',
     sex: 'other',

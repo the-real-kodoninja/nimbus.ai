@@ -61,3 +61,18 @@ export interface FileContent {
   type: string;
   content: string;
 }
+
+export interface NimbusAgent {
+  id: string; // Unique ID for the agent
+  name: string;
+  role: string; // e.g., "wife", "assistant", "friend"
+  voice: string;
+  sex: 'male' | 'female' | 'other';
+  personality: Personality;
+  avatar: AvatarCustomization;
+  threadId?: string; // ID of the agent's dedicated thread
+}
+
+export interface UserSettings {
+  agents: NimbusAgent[]; // Array of agents (max 5)
+}
