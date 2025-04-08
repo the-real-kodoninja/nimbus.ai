@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Paper,
@@ -18,6 +18,7 @@ import rehypeSanitize from 'rehype-sanitize';
 import CodeBlock from './CodeBlock';
 import { HistoryItem, UserSettings, FileContent } from '../shared/types';
 import { formatDate, handleShareResponse } from '../shared/utils';
+import { getAvatarSnapshot } from '../../utils/avatarSnapshot'; // Import the utility for avatar snapshots
 
 interface Props {
   showWelcome: boolean;
@@ -46,6 +47,16 @@ const ChatArea: React.FC<Props> = ({
   onSpeakText,
   onSelectFile,
 }) => {
+  const [avatarImage, setAvatarImage] = useState<string>(''); // State for avatar image
+
+  useEffect(() => {
+    const loadAvatar = async () => {
+      const snapshot = await getAvatarSnapshot(userSettings.avatar); // Fetch avatar snapshot
+      setAvatarImage(snapshot);
+    };
+    loadAvatar();
+  }, [userSettings.avatar]);
+
   return (
     <Paper
       elevation={0}
@@ -129,17 +140,13 @@ const ChatArea: React.FC<Props> = ({
                             remarkPlugins={[remarkGfm]}
                             rehypePlugins={[rehypeSanitize]}
                             components={{
-                              code({ inline, className, children, ...props }) {
+                              code({ inline, className, children, ...props }: { inline?: boolean; className?: string; children: React.ReactNode }) {
                                 const match = /language-(\w+)/.exec(className || '');
                                 const codeString = String(children).replace(/\n$/, '');
                                 const language = match ? match[1] : 'text';
 
                                 if (inline) {
-                                  return (
-                                    <code className={className} {...props}>
-                                      {children}
-                                    </code>
-                                  );
+                                  return <code className={className} {...props}>{children}</code>;
                                 }
 
                                 return (
@@ -171,7 +178,7 @@ const ChatArea: React.FC<Props> = ({
                             </Box>
                           </Box>
                         </Box>
-                        <Avatar sx={{ marginLeft: 1 }} />
+                        <Avatar src={avatarImage} sx={{ marginLeft: 1 }} />
                       </Box>
                     </motion.div>
                   )}
@@ -195,7 +202,7 @@ const ChatArea: React.FC<Props> = ({
                       {userSettings.aiName} is typing... <CircularProgress size={16} sx={{ marginLeft: 1 }} />
                     </Typography>
                   </Box>
-                  <Avatar sx={{ marginLeft: 1 }} />
+                  <Avatar src={avatarImage} sx={{ marginLeft: 1 }} />
                 </Box>
               </Fade>
             )}
@@ -214,7 +221,7 @@ const ChatArea: React.FC<Props> = ({
                   >
                     <Typography variant="body2">{errorMessage}</Typography>
                   </Box>
-                  <Avatar sx={{ marginLeft: 1 }} />
+                  <Avatar src={avatarImage} sx={{ marginLeft: 1 }} />
                 </Box>
               </Fade>
             )}

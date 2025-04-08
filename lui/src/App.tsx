@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from './firebase';
+import { auth, db } from './firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import LanguageModelUI from './components/LanguageModelUI/LanguageModelUI';
 import HistoryLog from './pages/HistoryLog';
 import UserProfile from './pages/userProfile';
@@ -13,12 +13,29 @@ import { UserSettings } from './components/shared/types';
 
 const App: React.FC = () => {
   const [isDarkTheme, setIsDarkTheme] = useState<boolean>(true);
-  const [userSettings, setUserSettings] = useState<UserSettings>({ aiName: 'Nimbus.ai', voice: 'default' });
+  const [userSettings, setUserSettings] = useState<UserSettings>({
+    aiName: 'Nimbus',
+    voice: 'default',
+    sex: 'other',
+    personality: 'friendly',
+    avatar: { modelUrl: '', textureUrl: '' },
+  });
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setIsLoggedIn(!!user); // Set isLoggedIn to true if a user is authenticated
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      setIsLoggedIn(!!user);
+      if (user) {
+        try {
+          const settingsRef = doc(db, 'users', user.uid, 'settings', 'userSettings');
+          const settingsSnap = await getDoc(settingsRef);
+          if (settingsSnap.exists()) {
+            setUserSettings(settingsSnap.data() as UserSettings);
+          }
+        } catch (error) {
+          console.error('Error fetching user settings:', error);
+        }
+      }
     });
     return () => unsubscribe();
   }, []);
