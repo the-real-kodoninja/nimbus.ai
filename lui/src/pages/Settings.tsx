@@ -19,6 +19,18 @@ import { auth, db, storage } from '../firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { exportAgentAsVRM } from '../utils/exportAgent'; // Added import for exportAgentAsVRM
+
+// Add NimbusAgent interface
+interface NimbusAgent {
+  id: string;
+  name: string;
+  role: string;
+  voice: string;
+  sex: 'male' | 'female' | 'other';
+  personality: Personality;
+  avatar: AvatarCustomization;
+}
 
 interface DataSource {
   googleDriveFolderId: string;
@@ -52,6 +64,7 @@ interface UserSettings {
   sex: 'male' | 'female' | 'other';
   personality: Personality;
   avatar: AvatarCustomization;
+  agents: NimbusAgent[];
 }
 
 const Settings: React.FC = () => {
@@ -87,6 +100,31 @@ const Settings: React.FC = () => {
   });
   const [newAccessory, setNewAccessory] = useState('');
   const [tabValue, setTabValue] = useState(0);
+  const [newAgent, setNewAgent] = useState<NimbusAgent>({
+    id: '',
+    name: '',
+    role: '',
+    voice: 'default',
+    sex: 'other',
+    personality: {
+      traits: ['friendly'],
+      tone: 'casual',
+      humorLevel: 5,
+      empathyLevel: 7,
+      customScript: '',
+    },
+    avatar: {
+      modelUrl: '',
+      textureUrl: '',
+      height: 1.8,
+      skinTone: 'medium',
+      hair: { style: 'short', color: 'black' },
+      eyes: { color: 'brown', shape: 'almond' },
+      clothing: { top: 'shirt', bottom: 'pants', color: 'blue' },
+      accessories: [],
+      animations: { idle: '', talk: '', wave: '' },
+    },
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -197,26 +235,135 @@ const Settings: React.FC = () => {
         <Tab label="Agent Customization" />
         <Tab label="Personality" />
         <Tab label="Data Sources" />
+        <Tab label="Agents" />
       </Tabs>
 
       {tabValue === 0 && (
         <>
           {/* Agent Customization Section */}
-          {/* ... */}
+          {/* ... existing content remains unchanged ... */}
         </>
       )}
 
       {tabValue === 1 && (
         <>
           {/* Personality Customization Section */}
-          {/* ... */}
+          {/* ... existing content remains unchanged ... */}
         </>
       )}
 
       {tabValue === 2 && (
         <>
           {/* Data Sources Section */}
-          {/* ... */}
+          {/* ... existing content remains unchanged ... */}
+        </>
+      )}
+
+      {tabValue === 3 && (
+        <>
+          <Typography variant="h6" sx={{ marginTop: 2 }}>Manage Nimbus Agents (Max 5)</Typography>
+          {userSettings.agents.length >= 5 && (
+            <Typography color="error">You have reached the maximum number of agents (5).</Typography>
+          )}
+          {userSettings.agents.map(agent => (
+            <Box key={agent.id} sx={{ border: '1px solid', borderRadius: 2, padding: 2, marginTop: 2 }}>
+              <Typography variant="h6">{agent.name} ({agent.role})</Typography>
+              <Box sx={{ display: 'flex', gap: 1, marginTop: 1 }}>
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={() => setUserSettings(prev => ({
+                    ...prev,
+                    agents: prev.agents.filter(a => a.id !== agent.id),
+                  }))}
+                >
+                  Delete
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={async () => {
+                    const blob = await exportAgentAsVRM(agent);
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${agent.name}_agent.vrm`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                >
+                  Export as VRM
+                </Button>
+              </Box>
+            </Box>
+          ))}
+          {userSettings.agents.length < 5 && (
+            <>
+              <Typography variant="h6" sx={{ marginTop: 2 }}>Create New Agent</Typography>
+              <TextField
+                label="Name"
+                value={newAgent.name}
+                onChange={(e) => setNewAgent(prev => ({ ...prev, name: e.target.value }))}
+                fullWidth
+                margin="normal"
+              />
+              <TextField
+                label="Role"
+                value={newAgent.role}
+                onChange={(e) => setNewAgent(prev => ({ ...prev, role: e.target.value }))}
+                fullWidth
+                margin="normal"
+              />
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Sex</InputLabel>
+                <Select
+                  value={newAgent.sex}
+                  onChange={(e) => setNewAgent(prev => ({ ...prev, sex: e.target.value as 'male' | 'female' | 'other' }))}
+                >
+                  <MenuItem value="male">Male</MenuItem>
+                  <MenuItem value="female">Female</MenuItem>
+                  <MenuItem value="other">Other</MenuItem>
+                </Select>
+              </FormControl>
+              <Button
+                variant="contained"
+                onClick={() => {
+                  const id = Date.now().toString();
+                  setUserSettings(prev => ({
+                    ...prev,
+                    agents: [...prev.agents, { ...newAgent, id }],
+                  }));
+                  setNewAgent({
+                    id: '',
+                    name: '',
+                    role: '',
+                    voice: 'default',
+                    sex: 'other',
+                    personality: {
+                      traits: ['friendly'],
+                      tone: 'casual',
+                      humorLevel: 5,
+                      empathyLevel: 7,
+                      customScript: '',
+                    },
+                    avatar: {
+                      modelUrl: '',
+                      textureUrl: '',
+                      height: 1.8,
+                      skinTone: 'medium',
+                      hair: { style: 'short', color: 'black' },
+                      eyes: { color: 'brown', shape: 'almond' },
+                      clothing: { top: 'shirt', bottom: 'pants', color: 'blue' },
+                      accessories: [],
+                      animations: { idle: '', talk: '', wave: '' },
+                    },
+                  });
+                }}
+                sx={{ marginTop: 2 }}
+              >
+                Create Agent
+              </Button>
+            </>
+          )}
         </>
       )}
 

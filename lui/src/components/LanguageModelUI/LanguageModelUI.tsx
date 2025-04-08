@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, IconButton, Button } from '@mui/material';
+import { Box, IconButton, Button, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import axios from 'axios';
 import axiosRateLimit from 'axios-rate-limit';
 import DOMPurify from 'dompurify';
@@ -12,7 +12,7 @@ import ChatArea from './ChatArea';
 import InputArea from './InputArea';
 import FileViewerDialog from './FileViewerDialog';
 import MenuOptions from './MenuOptions';
-import VirtualSpace from './VirtualSpace'; // Import the VirtualSpace component
+import VirtualSpace from './VirtualSpace';
 import { UserSettings, HistoryItem, Thread, FileContent } from '../shared/types';
 import MenuIcon from '@mui/icons-material/Menu';
 import { searchWebsites } from '../../modules/websiteSearch';
@@ -24,7 +24,35 @@ import { searchHealthResources } from '../../modules/aviyonHealth';
 import { searchBusinessResources } from '../../modules/aviyonBusiness';
 import { searchPlanetResources } from '../../modules/aviyonPlanet';
 import { getFounderInfo, logInteraction } from '../../modules/aviyonFounder';
-import { applyPersonality } from '../../modules/personalityEngine'; // Import applyPersonality
+import { applyPersonality } from '../../modules/personalityEngine';
+
+// Add NimbusAgent interface
+interface NimbusAgent {
+  id: string;
+  name: string;
+  role: string;
+  voice: string;
+  sex: 'male' | 'female' | 'other';
+  personality: {
+    traits: string[];
+    tone: string;
+    humorLevel: number;
+    empathyLevel: number;
+    customScript?: string;
+  };
+  avatar: {
+    modelUrl: string;
+    textureUrl?: string;
+    height: number;
+    skinTone: string;
+    hair: { style: string; color: string };
+    eyes: { color: string; shape: string };
+    clothing: { top: string; bottom: string; color: string };
+    accessories: string[];
+    animations: { idle: string; talk: string; wave: string };
+  };
+  threadId?: string; // Optional thread ID for agent-specific threads
+}
 
 const http = axiosRateLimit(axios.create(), { maxRequests: 10, perMilliseconds: 60000 });
 
@@ -54,11 +82,11 @@ const LanguageModelUI: React.FC<Props> = ({ onThemeToggle, isDarkTheme, userSett
   const [codeSnippets, setCodeSnippets] = useState<{ code: string; language: string; name: string }[]>([]);
   const [guestId, setGuestId] = useState<string | null>(null);
   const [isSidebarVisible, setIsSidebarVisible] = useState<boolean>(true);
-  const [thunderheadConnection, setThunderheadConnection] = useState<number>(100); // 0-100
-  const [showVirtualSpace, setShowVirtualSpace] = useState<boolean>(false); // State for toggling VirtualSpace
+  const [thunderheadConnection, setThunderheadConnection] = useState<number>(100);
+  const [showVirtualSpace, setShowVirtualSpace] = useState<boolean>(false);
+  const [selectedAgent, setSelectedAgent] = useState<NimbusAgent | null>(null); // Added selectedAgent state
   const navigate = useNavigate();
 
-  // Fetch IP address to use as guest ID and for logging
   useEffect(() => {
     const fetchIp = async () => {
       try {
@@ -73,14 +101,12 @@ const LanguageModelUI: React.FC<Props> = ({ onThemeToggle, isDarkTheme, userSett
     fetchIp();
   }, []);
 
-  // Log input changes (even unsent questions)
   useEffect(() => {
     if (guestId && input) {
       logInteraction(guestId, input, false);
     }
   }, [input, guestId]);
 
-  // Merge guest data into user account on login/signup
   const mergeGuestData = useCallback(async (userId: string) => {
     if (guestId) {
       const guestThreadsRef = collection(db, `ghostUsers/${guestId}/threads`);
@@ -107,7 +133,6 @@ const LanguageModelUI: React.FC<Props> = ({ onThemeToggle, isDarkTheme, userSett
     return () => unsubscribe();
   }, [guestId, mergeGuestData]);
 
-  // Fetch threads based on user or guest
   useEffect(() => {
     const fetchThreads = async () => {
       const userId = auth.currentUser?.uid || guestId;
@@ -134,7 +159,6 @@ const LanguageModelUI: React.FC<Props> = ({ onThemeToggle, isDarkTheme, userSett
     }
   }, [guestId]);
 
-  // Save thread to Firestore
   useEffect(() => {
     const saveThread = async () => {
       const userId = auth.currentUser?.uid || guestId;
@@ -151,7 +175,7 @@ const LanguageModelUI: React.FC<Props> = ({ onThemeToggle, isDarkTheme, userSett
     }
   }, [history, currentThread, guestId]);
 
-  const createNewThread = async () => {
+  const createNewThread = async (): Promise<string> => { // Updated to return thread ID
     const userId = auth.currentUser?.uid || guestId;
     const collectionPath = auth.currentUser ? `users/${userId}/threads` : `ghostUsers/${userId}/threads`;
 
@@ -167,7 +191,9 @@ const LanguageModelUI: React.FC<Props> = ({ onThemeToggle, isDarkTheme, userSett
       setCurrentThread(docRef.id);
       setHistory([]);
       setShowWelcome(false);
+      return docRef.id; // Return the new thread ID
     }
+    return ''; // Fallback return (though this shouldn't happen if userId exists)
   };
 
   const selectThread = (threadId: string) => {
@@ -216,8 +242,12 @@ const LanguageModelUI: React.FC<Props> = ({ onThemeToggle, isDarkTheme, userSett
     setIsTyping(true);
     let aiResponse = await fetchAIResponse(messageToSend, fileDataToSend); // Mock response used here
 
-    // Apply personality to the AI response
-    aiResponse = applyPersonality(aiResponse, userSettings.personality, messageToSend);
+    // Updated to use selected agent's personality, falling back to first agent if none selected
+    aiResponse = applyPersonality(
+      aiResponse,
+      selectedAgent?.personality || userSettings.agents[0]?.personality || userSettings.personality,
+      messageToSend
+    );
 
     setIsTyping(false);
 
@@ -271,11 +301,42 @@ const LanguageModelUI: React.FC<Props> = ({ onThemeToggle, isDarkTheme, userSett
                 <MenuIcon />
               </IconButton>
             )}
-            <Button onClick={() => setShowVirtualSpace(!showVirtualSpace)}>
+            <FormControl sx={{ minWidth: 200, marginLeft: 2 }}>
+              <InputLabel>Select Agent</InputLabel>
+              <Select
+                value={selectedAgent?.id || ''}
+                onChange={(e) => {
+                  const agent = userSettings.agents.find(a => a.id === e.target.value);
+                  setSelectedAgent(agent || null);
+                  if (agent?.threadId) {
+                    selectThread(agent.threadId);
+                  } else {
+                    createNewThread().then(threadId => {
+                      setUserSettings(prev => ({
+                        ...prev,
+                        agents: prev.agents.map(a =>
+                          a.id === agent?.id ? { ...a, threadId } : a
+                        ),
+                      }));
+                    });
+                  }
+                }}
+              >
+                {userSettings.agents.map(agent => (
+                  <MenuItem key={agent.id} value={agent.id}>{agent.name} ({agent.role})</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Button onClick={() => setShowVirtualSpace(!showVirtualSpace)} sx={{ marginLeft: 2 }}>
               {showVirtualSpace ? 'Hide Virtual Space' : 'Show Virtual Space'}
             </Button>
           </Box>
-          {showVirtualSpace && <VirtualSpace avatar={userSettings.avatar} isTalking={isTyping}/>}
+          {showVirtualSpace && (
+            <VirtualSpace
+              avatar={selectedAgent?.avatar || userSettings.avatar} // Use selected agent's avatar if available
+              isTalking={isTyping}
+            />
+          )}
           <ChatArea
             showWelcome={showWelcome}
             isDarkTheme={isDarkTheme}

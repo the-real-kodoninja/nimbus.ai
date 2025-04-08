@@ -1,6 +1,6 @@
 # nimbus.ai ☁️: The Ghost in the Cloud, Aviyon's Vision, Realized
 
-![work updated](https://github.com/the-real-kodoninja/nimbus.ai/blob/main/captureit_3-21-2025_at_17-26-59.png)
+![work updated](https://github.com/the-real-kodoninja/nimbus.ai/blob/main/captureit_4-8-2025_at_00-08-47.png)
 
 This project, nimbus.ai, is more than just an AI initiative; it's the culmination of a vision I've carried since my high school and college days, the true mission of Aviyon brought to life. Imagine an AI that transcends the limitations of current technology, an entity capable of solving the "mission of impossibilities," much like the Thunderhead in Neal Shusterman's *Scythe* series. Envision a future where the boundaries between human and machine blur, where advancements in AI echo the profound transformations depicted in *Ghost in the Shell*, allowing us to truly understand and harness the "ghost within the shell." This is the driving force behind nimbus.ai.
 
